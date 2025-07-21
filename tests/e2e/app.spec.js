@@ -4,6 +4,26 @@ import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
+const execAsync = promisify(exec);
+
+// Helper function to get the appropriate ImageMagick command based on the environment
+async function getImageMagickCommand() {
+  try {
+    // Try 'magick' command first (ImageMagick 7+)
+    await execAsync('magick -version');
+    return {
+      convert: 'magick',
+      identify: 'magick identify'
+    };
+  } catch (error) {
+    // Fall back to 'convert' and 'identify' (ImageMagick 6)
+    return {
+      convert: 'convert',
+      identify: 'identify'
+    };
+  }
+}
+
 test.describe('Sewing SVG to PDF Converter', () => {
   test('should load the application successfully', async ({ page }) => {
     await page.goto('/');
@@ -316,10 +336,9 @@ test.describe('Sewing SVG to PDF Converter', () => {
           
           // Convert PDF to image using ImageMagick for visual verification
           try {
-            const execAsync = promisify(exec);
-            
+            const imageMagick = await getImageMagickCommand();
             const imagePath = downloadPath.replace('.pdf', '.png');
-            const magickCommand = `magick "${downloadPath}" -density 150 -background white -alpha remove "${imagePath}"`;
+            const magickCommand = `${imageMagick.convert} "${downloadPath}" -density 150 -background white -alpha remove "${imagePath}"`;
             
             console.log('Converting PDF to image with ImageMagick:', magickCommand);
             const { stdout, stderr } = await execAsync(magickCommand);
@@ -342,7 +361,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
               // Analyze image content using ImageMagick identify and specific color checks
               try {
                 // Get histogram to check for actual colored pixels
-                const histogramCommand = `magick "${imagePath}" -format "%c" histogram:info:`;
+                const histogramCommand = `${imageMagick.convert} "${imagePath}" -format "%c" histogram:info:`;
                 const { stdout: histogramInfo } = await execAsync(histogramCommand);
                 console.log('Image histogram info:', histogramInfo.trim().substring(0, 500) + '...');
                 
@@ -365,7 +384,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
                 // Check specific pixel colors at expected corner marker positions
                 // Note: PDF rendering may scale/offset, so we'll check a few positions near corners
                 // Get image dimensions first
-                const { stdout: dimensions } = await execAsync(`magick identify -format "%w %h" "${imagePath}"`);
+                const { stdout: dimensions } = await execAsync(`${imageMagick.identify} -format "%w %h" "${imagePath}"`);
                 const [width, height] = dimensions.trim().split(' ').map(Number);
                 
                 const colorChecks = [
@@ -377,7 +396,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
                 
                 for (const check of colorChecks) {
                   try {
-                    const pixelCommand = `magick "${imagePath}"[1x1+${check.x}+${check.y}] -format "%[pixel:u]" info:`;
+                    const pixelCommand = `${imageMagick.convert} "${imagePath}"[1x1+${check.x}+${check.y}] -format "%[pixel:u]" info:`;
                     const { stdout: pixelColor } = await execAsync(pixelCommand);
                     console.log(`Color check ${check.name} at ${check.x},${check.y}: ${pixelColor.trim()}`);
                   } catch (pixelError) {
@@ -607,10 +626,9 @@ test.describe('Sewing SVG to PDF Converter', () => {
           
           // Convert PDF to image using ImageMagick for visual verification
           try {
-            const execAsync = promisify(exec);
-            
+            const imageMagick = await getImageMagickCommand();
             const imagePath = downloadPath.replace('.pdf', '.png');
-            const magickCommand = `magick "${downloadPath}" -density 150 -background white -alpha remove "${imagePath}"`;
+            const magickCommand = `${imageMagick.convert} "${downloadPath}" -density 150 -background white -alpha remove "${imagePath}"`;
             
             console.log('Converting scaling PDF to image with ImageMagick:', magickCommand);
             const { stdout, stderr } = await execAsync(magickCommand);
@@ -633,7 +651,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
               // Analyze image content using ImageMagick histogram
               try {
                 // Get histogram to check for actual colored pixels
-                const histogramCommand = `magick "${imagePath}" -format "%c" histogram:info:`;
+                const histogramCommand = `${imageMagick.convert} "${imagePath}" -format "%c" histogram:info:`;
                 const { stdout: histogramInfo } = await execAsync(histogramCommand);
                 console.log('Scaling image histogram (first 500 chars):', histogramInfo.trim().substring(0, 500) + '...');
                 
@@ -998,22 +1016,21 @@ test.describe('Sewing SVG to PDF Converter', () => {
       await page.waitForTimeout(3000);
       
       // Verify PDF content with ImageMagick
-      const execAsync = promisify(exec);
-      
       try {
         // Convert PDF to image
+        const imageMagick = await getImageMagickCommand();
         const pdfPath = path.join(process.cwd(), 'tests/e2e/downloads/sewing-pattern-1x1.pdf');
         const imagePath = path.join(process.cwd(), 'tests/e2e/downloads/color-scaling-verification.png');
         
         console.log('Converting color scaling PDF to image for verification...');
-        await execAsync(`magick "${pdfPath}" -density 150 -background white -alpha remove "${imagePath}"`);
+        await execAsync(`${imageMagick.convert} "${pdfPath}" -density 150 -background white -alpha remove "${imagePath}"`);
         
         // Check image stats
         const imageStats = fs.statSync(imagePath);
         expect(imageStats.size).toBeGreaterThan(1000); // At least 1KB
         
         // Analyze colors in the image
-        const histogramResult = await execAsync(`magick "${imagePath}" -format %c -depth 8 histogram:info:`);
+        const histogramResult = await execAsync(`${imageMagick.convert} "${imagePath}" -format %c -depth 8 histogram:info:`);
         const histogram = histogramResult.stdout;
         
         // Check for presence of different colors (more flexible pattern matching)
