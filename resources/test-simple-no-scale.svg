@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100mm" height="100mm">
+  <defs>
+    <style>
+      .seam { stroke: #000; stroke-width: 1px; fill: none; }
+    </style>
+  </defs>
+  <g>
+    <!-- Simple rectangle border -->
+    <path class="seam" d="M 10,10 L 90,10 L 90,90 L 10,90 Z"/>
+    
+    <!-- Corner markers with different colors for verification -->
+    <circle cx="10" cy="10" r="5" fill="#ff0000"/>  <!-- Top-left: Red -->
+    <circle cx="90" cy="10" r="5" fill="#00ff00"/>  <!-- Top-right: Green -->
+    <circle cx="90" cy="90" r="5" fill="#0000ff"/>  <!-- Bottom-right: Blue -->
+    <circle cx="10" cy="90" r="5" fill="#ffff00"/>  <!-- Bottom-left: Yellow -->
+    
+    <!-- Center marker for reference -->
+    <circle cx="50" cy="50" r="3" fill="#ff00ff"/>  <!-- Center: Magenta -->
+    
+    <!-- Test text -->
+    <text x="50" y="30" text-anchor="middle" font-size="8" fill="#000">TEST</text>
+  </g>
+</svg>

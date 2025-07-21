@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sewing SVG to PDF Converter</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- jsPDF と svg2pdf.js をCDNから読み込み -->
+    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/svg2pdf.js@2.2.3/dist/svg2pdf.umd.min.js"></script>
+    
+    <!-- ライブラリの読み込み確認 -->
+    <script>
+        window.addEventListener('load', () => {
+            console.log('jsPDF available:', typeof window.jspdf !== 'undefined');
+            console.log('svg2pdf available:', typeof window.svg2pdf !== 'undefined');
+            
+            if (typeof window.jspdf === 'undefined') {
+                console.error('jsPDF failed to load');
+            }
+            if (typeof window.svg2pdf === 'undefined') {
+                console.error('svg2pdf.js failed to load');
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sewing SVG to PDF Converter</h1>
+            <p>Blender Seams to Sewing Pattern プラグインのSVGファイルを印刷可能なPDFに変換します</p>
+        </header>
+
+        <main>
+            <!-- ファイルアップロードセクション -->
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <svg class="upload-icon" width="60" height="60" viewBox="0 0 24 24">
+                        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                    </svg>
+                    <p>SVGファイルをドラッグ&ドロップ<br>または</p>
+                    <label for="fileInput" class="file-label">ファイルを選択</label>
+                    <input type="file" id="fileInput" accept=".svg" hidden>
+                </div>
+                <div id="fileInfo" class="file-info"></div>
+            </section>
+
+            <!-- 設定セクション -->
+            <section class="settings-section" id="settingsSection" style="display: none;">
+                <h2>設定</h2>
+                
+                <div class="setting-group">
+                    <h3>スケール補正</h3>
+                    <div class="input-group">
+                        <label for="scaleFactor">スケール係数:</label>
+                        <input type="number" id="scaleFactor" value="1" step="0.0001" min="0.0001" max="1">
+                        <span class="help-text">テスト用: 1 (スケーリングなし) | 通常: 0.001 (1/1000)</span>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>用紙設定</h3>
+                    <div class="input-group">
+                        <label for="paperSize">用紙サイズ:</label>
+                        <select id="paperSize">
+                            <option value="a4" selected>A4 (210×297mm)</option>
+                            <option value="a3">A3 (297×420mm)</option>
+                            <option value="b4">B4 (257×364mm)</option>
+                            <option value="b5">B5 (182×257mm)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="orientation">向き:</label>
+                        <select id="orientation">
+                            <option value="portrait" selected>縦</option>
+                            <option value="landscape">横</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>印刷オプション</h3>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="splitPages" checked>
+                        <label for="splitPages">複数ページに分割</label>
+                    </div>
+                    <div class="input-group" id="overlapGroup">
+                        <label for="overlap">のりしろ (mm):</label>
+                        <input type="number" id="overlap" value="10" min="0" max="50">
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="addMarks" checked>
+                        <label for="addMarks">位置合わせマークを追加</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- プレビューセクション -->
+            <section class="preview-section" id="previewSection" style="display: none;">
+                <h2>プレビュー</h2>
+                <div id="svgPreview" class="svg-preview"></div>
+                <div id="pageInfo" class="page-info"></div>
+            </section>
+
+            <!-- 生成ボタン -->
+            <section class="action-section" id="actionSection" style="display: none;">
+                <button id="generatePdf" class="generate-button">PDFを生成</button>
+                <div id="progressInfo" class="progress-info"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2024 Sewing SVG to PDF Converter</p>
+        </footer>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

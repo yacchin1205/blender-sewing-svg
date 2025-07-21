@@ -1,0 +1,31 @@
+{
+  "name": "sewing-svg-to-pdf",
+  "version": "1.0.0",
+  "description": "Convert Blender Seams to Sewing Pattern SVG files to printable PDFs",
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
+  },
+  "keywords": [
+    "sewing",
+    "pattern",
+    "pdf",
+    "svg",
+    "blender",
+    "conversion"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "happy-dom": "^18.0.1",
+    "vitest": "^3.2.4"
+  }
+}

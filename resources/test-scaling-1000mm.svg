@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000mm" height="1000mm">
+  <defs>
+    <style>
+      .seam { stroke: #000; stroke-width: 2px; fill: none; }
+      .guide { stroke: #888; stroke-width: 1px; fill: none; stroke-dasharray: 5,5; }
+    </style>
+  </defs>
+  <g>
+    <!-- Main pattern rectangle (Blender unit issue: 1000x larger than intended) -->
+    <path class="seam" d="M 100,100 L 900,100 L 900,900 L 100,900 Z"/>
+    
+    <!-- Corner markers for scaling verification (different colors) -->
+    <circle cx="100" cy="100" r="50" fill="#ff0000"/>  <!-- Top-left: Red (50 unit radius) -->
+    <circle cx="900" cy="100" r="50" fill="#00ff00"/>  <!-- Top-right: Green -->
+    <circle cx="900" cy="900" r="50" fill="#0000ff"/>  <!-- Bottom-right: Blue -->
+    <circle cx="100" cy="900" r="50" fill="#ffff00"/>  <!-- Bottom-left: Yellow -->
+    
+    <!-- Center cross for reference -->
+    <path class="guide" d="M 500,0 L 500,1000 M 0,500 L 1000,500"/>
+    
+    <!-- Center marker -->
+    <circle cx="500" cy="500" r="30" fill="#ff00ff"/>  <!-- Center: Magenta -->
+    
+    <!-- Scale test elements at specific positions -->
+    <circle cx="250" cy="250" r="25" fill="#00ffff"/>  <!-- Quarter position: Cyan -->
+    <circle cx="750" cy="750" r="25" fill="#ffa500"/>  <!-- Three-quarter position: Orange -->
+    
+    <!-- Text for verification (large to be visible after scaling) -->
+    <text x="500" y="200" text-anchor="middle" font-size="80" fill="#000">SCALE TEST</text>
+    <text x="500" y="300" text-anchor="middle" font-size="60" fill="#666">1000mm → 1mm</text>
+  </g>
+</svg>
