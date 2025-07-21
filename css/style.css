@@ -198,6 +198,53 @@ main {
     color: #4a5568;
 }
 
+/* Unit constraint warnings */
+.unit-warning {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #fed7d7;
+    border: 1px solid #feb2b2;
+    border-radius: 4px;
+    color: #742a2a;
+    display: none;
+}
+
+.unit-warning.show {
+    display: block;
+}
+
+.unit-warning h4 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.unit-warning ul {
+    margin: 10px 0 0 20px;
+    padding: 0;
+}
+
+.unit-warning li {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.unit-warning .violation-details {
+    margin-left: 10px;
+    font-size: 0.85rem;
+    color: #9b2c2c;
+}
+
+.unit-warning .suggestion {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #fef5e7;
+    border: 1px solid #fbd38d;
+    border-radius: 4px;
+    color: #7c2d12;
+    font-size: 0.9rem;
+}
+
 /* アクションセクション */
 .action-section {
     text-align: center;

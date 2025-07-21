@@ -1,4 +1,5 @@
-import { scaleSVG, calculatePageLayout, createPagedSVG, addAlignmentMarks } from './svg-processor.js';
+import { scaleSVG } from './svg-processor.js';
+import { calculateUnitPlacement, createPlacedUnitsSVG } from './unit-placement.js';
 
 // Main PDF generation function
 export async function generatePDF(svgElement, settings) {
@@ -105,60 +106,46 @@ async function generateSinglePagePDF(svgElement, settings) {
     
     console.log('PDF document created');
     
-    // Prepare SVG for PDF conversion
-    const svgClone = svgElement.cloneNode(true);
+    // Use unit placement for single page as well
+    const placement = calculateUnitPlacement(svgElement, gridStrategy);
     
-    // Ensure SVG has proper dimensions
-    const viewBox = svgClone.viewBox?.baseVal;
-    if (viewBox) {
-        svgClone.setAttribute('width', viewBox.width + 'mm');
-        svgClone.setAttribute('height', viewBox.height + 'mm');
+    if (placement.pages.length === 0 && placement.unplacedUnits.length === 0) {
+        throw new Error('パターンピースが検出されませんでした');
     }
     
+    if (placement.unplacedUnits.length > 0) {
+        console.warn(`${placement.unplacedUnits.length} units could not be placed on any page`);
+    }
+    
+    // Use unit placement even for single page
+    const page = placement.pages[0] || { units: [] };
+    const pagedSVG = createPlacedUnitsSVG(svgElement, page, gridStrategy);
+    
     // Temporarily add SVG to DOM to ensure CSS styles are applied
-    svgClone.style.position = 'absolute';
-    svgClone.style.top = '-9999px';
-    svgClone.style.left = '-9999px';
-    document.body.appendChild(svgClone);
+    pagedSVG.style.position = 'absolute';
+    pagedSVG.style.top = '-9999px';
+    pagedSVG.style.left = '-9999px';
+    document.body.appendChild(pagedSVG);
     
-    // Force style computation
-    window.getComputedStyle(svgClone).display;
-    
-    console.log('SVG prepared for conversion:', {
-        width: svgClone.getAttribute('width'),
-        height: svgClone.getAttribute('height'),
-        viewBox: svgClone.getAttribute('viewBox')
-    });
-    
-    // Draw SVG to PDF
     try {
-        console.log('Starting svg2pdf conversion...');
+        // Force style computation
+        window.getComputedStyle(pagedSVG).display;
         
-        await window.svg2pdf.svg2pdf(svgClone, doc, {
+        // Draw SVG to PDF
+        await window.svg2pdf.svg2pdf(pagedSVG, doc, {
             x: gridStrategy.margin,
             y: gridStrategy.margin,
             width: gridStrategy.printableWidth,
             height: gridStrategy.printableHeight
         });
         
-        console.log('SVG to PDF conversion completed');
-        
         // Download PDF
         doc.save('sewing-pattern.pdf');
-        console.log('PDF download initiated');
         
-    } catch (error) {
-        console.error('PDF generation error:', error);
-        console.error('Error details:', {
-            message: error.message,
-            stack: error.stack,
-            svgElement: svgClone.outerHTML.substring(0, 200) + '...'
-        });
-        throw new Error('Failed to generate PDF: ' + error.message);
     } finally {
         // Remove temporary SVG from DOM
-        if (svgClone.parentNode) {
-            svgClone.parentNode.removeChild(svgClone);
+        if (pagedSVG.parentNode) {
+            pagedSVG.parentNode.removeChild(pagedSVG);
         }
     }
 }
@@ -169,11 +156,17 @@ async function generateMultiPagePDF(svgElement, settings) {
     const svg2pdf = window.svg2pdf.svg2pdf;
     const gridStrategy = getGridStrategy(settings);
     
-    // ページレイアウトを計算
-    const layout = calculatePageLayout(svgElement, gridStrategy);
+    // Calculate unit placement to avoid cutting units across pages
+    const placement = calculateUnitPlacement(svgElement, gridStrategy);
     
-    if (layout.totalPages === 0) {
-        throw new Error('有効なページが生成できませんでした');
+    if (placement.pages.length === 0 && placement.unplacedUnits.length === 0) {
+        throw new Error('パターンピースが検出されませんでした');
+    }
+    
+    // Warn about unplaced units
+    if (placement.unplacedUnits.length > 0) {
+        console.warn(`${placement.unplacedUnits.length} units could not be placed on any page`);
+        // TODO: Show warning to user about unplaced units
     }
     
     // PDF文書を作成
@@ -184,56 +177,105 @@ async function generateMultiPagePDF(svgElement, settings) {
     });
     
     try {
-        // 各ページを生成
-        for (let y = 0; y < layout.pagesY; y++) {
-            for (let x = 0; x < layout.pagesX; x++) {
-                // 最初のページ以外は新しいページを追加
-                if (x > 0 || y > 0) {
-                    doc.addPage();
-                }
+        // Generate each page with placed units
+        for (let i = 0; i < placement.pages.length; i++) {
+            const page = placement.pages[i];
+            
+            // Add new page for all except first
+            if (i > 0) {
+                doc.addPage();
+            }
+            
+            // Create SVG for this page with placed units
+            const pagedSVG = createPlacedUnitsSVG(svgElement, page, gridStrategy);
+            
+            // Add alignment marks if requested
+            if (settings.addMarks) {
+                addPageMarks(pagedSVG, i, placement.pages.length, gridStrategy);
+            }
+            
+            // Temporarily add SVG to DOM to ensure CSS styles are applied
+            pagedSVG.style.position = 'absolute';
+            pagedSVG.style.top = '-9999px';
+            pagedSVG.style.left = '-9999px';
+            document.body.appendChild(pagedSVG);
+            
+            try {
+                // Force style computation
+                window.getComputedStyle(pagedSVG).display;
                 
-                // ページ用のSVGを作成
-                const pagedSVG = createPagedSVG(svgElement, x, y, gridStrategy);
-                
-                // 位置合わせマークを追加
-                if (settings.addMarks) {
-                    addAlignmentMarks(pagedSVG, x, y, gridStrategy);
-                }
-                
-                // Temporarily add SVG to DOM to ensure CSS styles are applied
-                pagedSVG.style.position = 'absolute';
-                pagedSVG.style.top = '-9999px';
-                pagedSVG.style.left = '-9999px';
-                document.body.appendChild(pagedSVG);
-                
-                try {
-                    // Force style computation
-                    window.getComputedStyle(pagedSVG).display;
-                    
-                    // SVGをPDFに描画
-                    await svg2pdf(pagedSVG, doc, {
-                        x: gridStrategy.margin,
-                        y: gridStrategy.margin,
-                        width: gridStrategy.printableWidth,
-                        height: gridStrategy.printableHeight
-                    });
-                } finally {
-                    // Remove temporary SVG from DOM
-                    if (pagedSVG.parentNode) {
-                        pagedSVG.parentNode.removeChild(pagedSVG);
-                    }
+                // Draw SVG to PDF
+                await svg2pdf(pagedSVG, doc, {
+                    x: gridStrategy.margin,
+                    y: gridStrategy.margin,
+                    width: gridStrategy.printableWidth,
+                    height: gridStrategy.printableHeight
+                });
+            } finally {
+                // Remove temporary SVG from DOM
+                if (pagedSVG.parentNode) {
+                    pagedSVG.parentNode.removeChild(pagedSVG);
                 }
             }
         }
         
-        // PDFをダウンロード
-        const fileName = `sewing-pattern-${layout.pagesX}x${layout.pagesY}.pdf`;
+        // Download PDF
+        const fileName = `sewing-pattern-${placement.pages.length}pages.pdf`;
         doc.save(fileName);
         
     } catch (error) {
         console.error('PDF生成エラー:', error);
         throw new Error('PDFの生成に失敗しました');
     }
+}
+
+// Add page marks (page number and alignment marks)
+function addPageMarks(svgElement, pageIndex, totalPages, gridStrategy) {
+    const marks = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    marks.setAttribute('class', 'page-marks');
+    
+    // Add page number
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', gridStrategy.printableWidth / 2);
+    text.setAttribute('y', gridStrategy.printableHeight - 5);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('font-size', '8');
+    text.setAttribute('fill', 'black');
+    text.textContent = `Page ${pageIndex + 1} / ${totalPages}`;
+    marks.appendChild(text);
+    
+    // Add corner marks
+    const cornerSize = 5;
+    const corners = [
+        { x: 0, y: 0 },
+        { x: gridStrategy.printableWidth, y: 0 },
+        { x: 0, y: gridStrategy.printableHeight },
+        { x: gridStrategy.printableWidth, y: gridStrategy.printableHeight }
+    ];
+    
+    corners.forEach(corner => {
+        // Horizontal line
+        const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        hLine.setAttribute('x1', corner.x - cornerSize);
+        hLine.setAttribute('y1', corner.y);
+        hLine.setAttribute('x2', corner.x + cornerSize);
+        hLine.setAttribute('y2', corner.y);
+        hLine.setAttribute('stroke', 'black');
+        hLine.setAttribute('stroke-width', '0.5');
+        marks.appendChild(hLine);
+        
+        // Vertical line
+        const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        vLine.setAttribute('x1', corner.x);
+        vLine.setAttribute('y1', corner.y - cornerSize);
+        vLine.setAttribute('x2', corner.x);
+        vLine.setAttribute('y2', corner.y + cornerSize);
+        vLine.setAttribute('stroke', 'black');
+        vLine.setAttribute('stroke-width', '0.5');
+        marks.appendChild(vLine);
+    });
+    
+    svgElement.appendChild(marks);
 }
 
 // 用紙設定に基づくグリッド戦略の取得
@@ -277,19 +319,15 @@ export function calculatePageInfo(svgElement, settings) {
     let pageCount = 1;
     if (settings.splitPages) {
         const gridStrategy = getGridStrategy(settings);
-        // スケール済みSVGでページレイアウトを計算するため、一時的にSVGをスケール
+        // スケール済みSVGでユニット配置を計算
         const tempSVG = svgElement.cloneNode(true);
-        // svg-processor.jsからscaleSVGをインポートして使用
-        // 注意: この関数は同期的なので、import()は使えない
-        // 代わりに、scaledSVGを直接渡すように変更する必要がある
-        
-        // 一時的な解決策: スケールされたサイズでページレイアウトを計算
         tempSVG.setAttribute('viewBox', `0 0 ${width} ${height}`);
         tempSVG.setAttribute('width', `${width}mm`);
         tempSVG.setAttribute('height', `${height}mm`);
+        scaleSVG(tempSVG, scaleFactor);
         
-        const layout = calculatePageLayout(tempSVG, gridStrategy);
-        pageCount = layout.totalPages;
+        const placement = calculateUnitPlacement(tempSVG, gridStrategy);
+        pageCount = placement.pages.length || 1;
     }
     
     return {

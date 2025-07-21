@@ -195,6 +195,201 @@ function scalePointsData(pointsData, scaleFactor) {
     });
 }
 
+// Analyze SVG units (g elements that represent individual pattern pieces)
+export function analyzeSVGUnits(svgElement) {
+    const units = [];
+    const groups = svgElement.querySelectorAll('g');
+    
+    groups.forEach((group, index) => {
+        // Skip groups that are children of other groups (to avoid nested groups)
+        if (group.parentElement.tagName === 'g') return;
+        
+        const bbox = getElementBoundingBox(group);
+        if (bbox && bbox.width > 0 && bbox.height > 0) {
+            units.push({
+                index: index,
+                element: group,
+                className: group.getAttribute('class') || '',
+                id: group.getAttribute('id') || '',
+                boundingBox: bbox,
+                width: bbox.width,
+                height: bbox.height
+            });
+        }
+    });
+    
+    console.log(`Found ${units.length} g element units:`, units.map(u => ({
+        index: u.index,
+        class: u.className,
+        id: u.id,
+        size: `${u.width.toFixed(1)}×${u.height.toFixed(1)}`,
+        bbox: u.boundingBox
+    })));
+    
+    return units;
+}
+
+// Calculate bounding box for an SVG element (g, path, etc.)
+function getElementBoundingBox(element) {
+    try {
+        // Create a temporary SVG to calculate bounding box
+        const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const clonedElement = element.cloneNode(true);
+        tempSvg.appendChild(clonedElement);
+        
+        // Temporarily add to DOM for measurement
+        tempSvg.style.position = 'absolute';
+        tempSvg.style.top = '-9999px';
+        tempSvg.style.left = '-9999px';
+        tempSvg.style.width = '1000px';
+        tempSvg.style.height = '1000px';
+        document.body.appendChild(tempSvg);
+        
+        const bbox = clonedElement.getBBox();
+        const result = {
+            x: bbox.x,
+            y: bbox.y,
+            width: bbox.width,
+            height: bbox.height,
+            minX: bbox.x,
+            minY: bbox.y,
+            maxX: bbox.x + bbox.width,
+            maxY: bbox.y + bbox.height
+        };
+        
+        // Clean up
+        document.body.removeChild(tempSvg);
+        
+        return result;
+    } catch (error) {
+        console.warn('Failed to calculate bounding box for element:', error);
+        return null;
+    }
+}
+
+// Calculate bounding box for a path's d attribute (kept for compatibility)
+function getPathBoundingBox(pathData) {
+    try {
+        // Create a temporary SVG to calculate bounding box
+        const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        tempPath.setAttribute('d', pathData);
+        tempSvg.appendChild(tempPath);
+        
+        // Temporarily add to DOM for measurement
+        tempSvg.style.position = 'absolute';
+        tempSvg.style.top = '-9999px';
+        tempSvg.style.left = '-9999px';
+        tempSvg.style.width = '1px';
+        tempSvg.style.height = '1px';
+        document.body.appendChild(tempSvg);
+        
+        const bbox = tempPath.getBBox();
+        const result = {
+            minX: bbox.x,
+            minY: bbox.y,
+            maxX: bbox.x + bbox.width,
+            maxY: bbox.y + bbox.height
+        };
+        
+        // Clean up
+        document.body.removeChild(tempSvg);
+        
+        return result;
+    } catch (error) {
+        console.warn('Failed to calculate bounding box for path:', error);
+        return null;
+    }
+}
+
+// Check if all units fit within page constraints
+export function checkUnitsPageConstraints(svgElement, settings) {
+    console.log('checkUnitsPageConstraints called with settings:', settings);
+    
+    // SVG is already scaled when passed in, so don't scale again
+    const scaledSVG = svgElement.cloneNode(true);
+    
+    const units = analyzeSVGUnits(scaledSVG);
+    const gridStrategy = getGridStrategy(settings);
+    
+    console.log('Grid strategy:', gridStrategy);
+    console.log('Found units:', units);
+    
+    const violations = [];
+    
+    units.forEach(unit => {
+        const unitWidth = unit.width;
+        const unitHeight = unit.height;
+        
+        console.log(`Checking unit ${unit.index}: ${unitWidth}x${unitHeight} vs page ${gridStrategy.printableWidth}x${gridStrategy.printableHeight}`);
+        
+        // Check if unit exceeds page printable area
+        if (unitWidth > gridStrategy.printableWidth || unitHeight > gridStrategy.printableHeight) {
+            const violation = {
+                unitIndex: unit.index,
+                unitClass: unit.className,
+                unitId: unit.id,
+                unitSize: {
+                    width: unitWidth,
+                    height: unitHeight
+                },
+                pageSize: {
+                    width: gridStrategy.printableWidth,
+                    height: gridStrategy.printableHeight
+                },
+                exceedsWidth: unitWidth > gridStrategy.printableWidth,
+                exceedsHeight: unitHeight > gridStrategy.printableHeight
+            };
+            console.log('Found violation:', violation);
+            violations.push(violation);
+        }
+    });
+    
+    const result = {
+        isValid: violations.length === 0,
+        violations: violations,
+        totalUnits: units.length,
+        pageConstraints: {
+            printableWidth: gridStrategy.printableWidth,
+            printableHeight: gridStrategy.printableHeight,
+            paperSize: settings.paperSize,
+            orientation: settings.orientation
+        }
+    };
+    
+    console.log('Constraint check result:', result);
+    return result;
+}
+
+// Get grid strategy (moved from pdf-generator.js for reuse)
+function getGridStrategy(settings) {
+    const paperSizes = {
+        a4: { width: 210, height: 297 },
+        a3: { width: 297, height: 420 },
+        b4: { width: 257, height: 364 },
+        b5: { width: 182, height: 257 }
+    };
+    
+    const size = paperSizes[settings.paperSize] || paperSizes.a4;
+    const isLandscape = settings.orientation === 'landscape';
+    
+    const pageWidth = isLandscape ? size.height : size.width;
+    const pageHeight = isLandscape ? size.width : size.height;
+    const margin = 10;
+    const overlap = settings.overlap || 0;
+    
+    return {
+        pageWidth,
+        pageHeight,
+        margin,
+        overlap,
+        printableWidth: pageWidth - margin * 2,
+        printableHeight: pageHeight - margin * 2,
+        effectiveWidth: pageWidth - margin * 2 - overlap,
+        effectiveHeight: pageHeight - margin * 2 - overlap
+    };
+}
+
 // Calculate page layout
 export function calculatePageLayout(svgElement, gridStrategy) {
     // Use the scaled physical size (both viewBox and size attributes are now scaled)

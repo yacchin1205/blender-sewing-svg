@@ -14,7 +14,6 @@ const translations = {
         settingsTitle: 'Settings',
         scaleCorrection: 'Scale Correction',
         scaleFactor: 'Scale factor:',
-        scaleHelp: 'Default: 0.001 (1/1000)',
         paperSettings: 'Paper Settings',
         paperSize: 'Paper size:',
         orientation: 'Orientation:',
@@ -50,6 +49,16 @@ const translations = {
         pdfGenerated: 'PDF generated successfully!',
         failedToGenerate: 'Failed to generate PDF:',
         
+        // Unit constraint warnings
+        unitConstraintWarning: 'Pattern Unit Size Warning',
+        unitTooLarge: 'The following pattern units exceed the printable page size:',
+        unitExceedsWidth: 'Width exceeds page limit',
+        unitExceedsHeight: 'Height exceeds page limit',
+        unitExceedsBoth: 'Width and height exceed page limits',
+        unitSizeFormat: 'Unit size: {width}mm × {height}mm',
+        pageSizeFormat: 'Max page size: {width}mm × {height}mm',
+        unitSuggestion: 'Try using a larger paper size (A3 instead of A4) or reduce the scale factor to make the units smaller.',
+        
         // Footer
         copyright: '© 2024 Sewing SVG to PDF Converter'
     },
@@ -67,7 +76,6 @@ const translations = {
         settingsTitle: '設定',
         scaleCorrection: 'スケール補正',
         scaleFactor: 'スケール係数:',
-        scaleHelp: 'デフォルト: 0.001 (1/1000)',
         paperSettings: '用紙設定',
         paperSize: '用紙サイズ:',
         orientation: '向き:',
@@ -102,6 +110,16 @@ const translations = {
         generatingPdf: 'PDFを生成中...',
         pdfGenerated: 'PDFが生成されました！',
         failedToGenerate: 'PDF生成に失敗しました:',
+        
+        // Unit constraint warnings
+        unitConstraintWarning: '型紙ユニットサイズ警告',
+        unitTooLarge: '以下の型紙ユニットが印刷可能ページサイズを超えています:',
+        unitExceedsWidth: '幅がページ制限を超過',
+        unitExceedsHeight: '高さがページ制限を超過',
+        unitExceedsBoth: '幅と高さがページ制限を超過',
+        unitSizeFormat: 'ユニットサイズ: {width}mm × {height}mm',
+        pageSizeFormat: '最大ページサイズ: {width}mm × {height}mm',
+        unitSuggestion: 'より大きな用紙サイズ（A4からA3など）を使用するか、スケール係数を小さくしてユニットを縮小してください。',
         
         // Footer
         copyright: '© 2024 Sewing SVG to PDF Converter'
@@ -187,19 +205,13 @@ export function updatePageTexts() {
     updateLabel('scaleFactor', t('scaleFactor'));
     updateLabel('paperSize', t('paperSize'));
     updateLabel('orientation', t('orientation'));
-    updateLabel('splitPages', t('splitPages'));
-    updateLabel('overlap', t('overlapMargin'));
-    updateLabel('addMarks', t('addMarks'));
     
     // Update setting group headings
     const settingGroups = document.querySelectorAll('.setting-group h3');
-    settingGroups[0].textContent = t('scaleCorrection');
-    settingGroups[1].textContent = t('paperSettings');
-    settingGroups[2].textContent = t('printOptions');
+    if (settingGroups[0]) settingGroups[0].textContent = t('scaleCorrection');
+    if (settingGroups[1]) settingGroups[1].textContent = t('paperSettings');
     
-    // Update help text
-    const helpText = document.querySelector('.help-text');
-    if (helpText) helpText.textContent = t('scaleHelp');
+    // Note: help text removed per user request
     
     // Update paper size options
     const paperSizeSelect = document.getElementById('paperSize');

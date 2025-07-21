@@ -38,3 +38,54 @@ export function showProgress(element, message, type = 'info') {
         element.style.backgroundColor = '#bee3f8';
     }
 }
+
+// Show unit constraint warning
+export function showUnitWarning(elements, constraintCheck, t) {
+    const { violations, pageConstraints } = constraintCheck;
+    
+    let violationList = '';
+    violations.forEach((violation, index) => {
+        const unitName = violation.unitClass || violation.unitId || `Unit ${violation.unitIndex + 1}`;
+        const sizeInfo = t('unitSizeFormat')
+            .replace('{width}', violation.unitSize.width.toFixed(1))
+            .replace('{height}', violation.unitSize.height.toFixed(1));
+        
+        let exceedsInfo = '';
+        if (violation.exceedsWidth && violation.exceedsHeight) {
+            exceedsInfo = t('unitExceedsBoth');
+        } else if (violation.exceedsWidth) {
+            exceedsInfo = t('unitExceedsWidth');
+        } else if (violation.exceedsHeight) {
+            exceedsInfo = t('unitExceedsHeight');
+        }
+        
+        violationList += `
+            <li>
+                ${unitName}
+                <div class="violation-details">
+                    ${sizeInfo}<br>
+                    ${exceedsInfo}
+                </div>
+            </li>
+        `;
+    });
+    
+    const pageSizeInfo = t('pageSizeFormat')
+        .replace('{width}', pageConstraints.printableWidth.toFixed(0))
+        .replace('{height}', pageConstraints.printableHeight.toFixed(0));
+    
+    elements.unitWarning.innerHTML = `
+        <h4>${t('unitConstraintWarning')}</h4>
+        <p>${t('unitTooLarge')}</p>
+        <ul>${violationList}</ul>
+        <div class="violation-details">${pageSizeInfo}</div>
+        <div class="suggestion">${t('unitSuggestion')}</div>
+    `;
+    
+    elements.unitWarning.classList.add('show');
+}
+
+// Hide unit constraint warning
+export function hideUnitWarning(elements) {
+    elements.unitWarning.classList.remove('show');
+}

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400mm" height="500mm">
+  <defs>
+    <style>
+      .seam { stroke: #000; stroke-width: 1px; fill: none; }
+      .unit { fill: #f0f0f0; stroke: #333; stroke-width: 2px; }
+    </style>
+  </defs>
+  
+  <!-- Pattern unit 1: Front piece (150x180mm) - fits on A4 -->
+  <g id="front-piece" class="pattern-unit">
+    <rect x="10" y="10" width="150" height="180" class="unit"/>
+    <path d="M 10,10 L 160,10 L 160,190 L 10,190 Z" class="seam"/>
+    <text x="85" y="100" text-anchor="middle" font-size="10">FRONT</text>
+  </g>
+  
+  <!-- Pattern unit 2: Back piece (150x180mm) - fits on A4 -->
+  <g id="back-piece" class="pattern-unit">
+    <rect x="180" y="10" width="150" height="180" class="unit"/>
+    <path d="M 180,10 L 330,10 L 330,190 L 180,190 Z" class="seam"/>
+    <text x="255" y="100" text-anchor="middle" font-size="10">BACK</text>
+  </g>
+  
+  <!-- Pattern unit 3: Sleeve (120x150mm) - fits on A4 -->
+  <g id="sleeve-piece" class="pattern-unit">
+    <rect x="10" y="210" width="120" height="150" class="unit"/>
+    <path d="M 10,210 L 130,210 L 130,360 L 10,360 Z" class="seam"/>
+    <text x="70" y="285" text-anchor="middle" font-size="10">SLEEVE</text>
+  </g>
+  
+  <!-- Pattern unit 4: Collar (180x80mm) - fits on A4 -->
+  <g id="collar-piece" class="pattern-unit">
+    <rect x="150" y="210" width="180" height="80" class="unit"/>
+    <path d="M 150,210 L 330,210 L 330,290 L 150,290 Z" class="seam"/>
+    <text x="240" y="250" text-anchor="middle" font-size="10">COLLAR</text>
+  </g>
+  
+  <!-- Pattern unit 5: Pocket (80x80mm) - fits on A4 -->
+  <g id="pocket-piece" class="pattern-unit">
+    <rect x="10" y="380" width="80" height="80" class="unit"/>
+    <path d="M 10,380 L 90,380 L 90,460 L 10,460 Z" class="seam"/>
+    <text x="50" y="420" text-anchor="middle" font-size="8">POCKET</text>
+  </g>
+</svg>

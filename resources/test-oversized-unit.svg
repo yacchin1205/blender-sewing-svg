@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500mm" height="500mm">
+  <defs>
+    <style>
+      .seam { stroke: #000; stroke-width: 2px; fill: none; }
+      .guide { stroke: #888; stroke-width: 1px; fill: none; stroke-dasharray: 5,5; }
+    </style>
+  </defs>
+  
+  <!-- Normal sized unit (should fit on A4) -->
+  <g id="normal-unit" class="pattern-piece">
+    <path class="seam" d="M 50,50 L 150,50 L 150,150 L 50,150 Z"/>
+    <circle cx="100" cy="100" r="10" fill="#00ff00"/>
+  </g>
+  
+  <!-- Oversized unit that exceeds A4 printable area (190mm x 277mm) -->
+  <g id="oversized-unit" class="pattern-piece">
+    <!-- This rectangle is 300mm x 200mm when scaled by 0.001 -->
+    <path class="seam" d="M 200,200 L 500,200 L 500,400 L 200,400 Z"/>
+    <circle cx="350" cy="300" r="20" fill="#ff0000"/>
+    <text x="350" y="320" text-anchor="middle" font-size="16" fill="#000">Large Unit</text>
+  </g>
+  
+  <!-- Another normal unit -->
+  <g id="small-unit" class="pattern-piece">
+    <path class="seam" d="M 100,300 L 180,300 L 180,380 L 100,380 Z"/>
+    <circle cx="140" cy="340" r="8" fill="#0000ff"/>
+  </g>
+</svg>

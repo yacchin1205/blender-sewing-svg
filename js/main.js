@@ -1,6 +1,7 @@
-import { loadSVGFile, setupFileHandlers, scaleSVG } from './svg-processor.js';
+import { loadSVGFile, setupFileHandlers, scaleSVG, checkUnitsPageConstraints, analyzeSVGUnits } from './svg-processor.js';
 import { generatePDF, calculatePageInfo } from './pdf-generator.js';
-import { updateUI, showError, showProgress } from './ui-controller.js';
+import { calculateUnitPlacement } from './unit-placement.js';
+import { updateUI, showError, showProgress, showUnitWarning, hideUnitWarning } from './ui-controller.js';
 import { initializeI18n, t } from './i18n.js';
 
 // Global state
@@ -17,17 +18,14 @@ const elements = {
     actionSection: document.getElementById('actionSection'),
     svgPreview: document.getElementById('svgPreview'),
     pageInfo: document.getElementById('pageInfo'),
+    unitWarning: document.getElementById('unitWarning'),
     generateButton: document.getElementById('generatePdf'),
     progressInfo: document.getElementById('progressInfo'),
     
     // Settings elements
     scaleFactor: document.getElementById('scaleFactor'),
     paperSize: document.getElementById('paperSize'),
-    orientation: document.getElementById('orientation'),
-    splitPages: document.getElementById('splitPages'),
-    overlap: document.getElementById('overlap'),
-    addMarks: document.getElementById('addMarks'),
-    overlapGroup: document.getElementById('overlapGroup')
+    orientation: document.getElementById('orientation')
 };
 
 // Initialize the application
@@ -43,9 +41,6 @@ function setupEventListeners() {
     elements.scaleFactor.addEventListener('change', updatePreview);
     elements.paperSize.addEventListener('change', updatePreview);
     elements.orientation.addEventListener('change', updatePreview);
-    elements.splitPages.addEventListener('change', handleSplitPagesChange);
-    elements.overlap.addEventListener('change', updatePreview);
-    elements.addMarks.addEventListener('change', updatePreview);
 }
 
 // Handle file selection
@@ -96,25 +91,42 @@ function updatePageInfo() {
     const settings = {
         paperSize: elements.paperSize.value,
         orientation: elements.orientation.value,
-        splitPages: elements.splitPages.checked,
-        overlap: parseInt(elements.overlap.value),
+        splitPages: true,  // Fixed to true
+        overlap: 0,        // Fixed to 0 (no margin)
+        addMarks: true,    // Fixed to true
         scaleFactor: parseFloat(elements.scaleFactor.value)
     };
     
+    // Calculate page info
     const pageInfo = calculatePageInfo(currentSVG, settings);
     if (pageInfo) {
-        elements.pageInfo.innerHTML = `
+        let infoHtml = `
             ${t('sizeLabel')} ${pageInfo.width}mm × ${pageInfo.height}mm<br>
             ${t('pagesLabel')} ${pageInfo.pageCount} ${t('pagesUnit')}
         `;
+        
+        // Add unit placement info if multiple pages
+        if (settings.splitPages && pageInfo.pageCount > 1) {
+            const units = analyzeSVGUnits(scaledSVG);
+            if (units.length > 0) {
+                infoHtml += `<br>${t('unitsLabel') || 'Pattern pieces:'} ${units.length}`;
+            }
+        }
+        
+        elements.pageInfo.innerHTML = infoHtml;
+    }
+    
+    // Check unit constraints using the already scaled SVG
+    const constraintCheck = checkUnitsPageConstraints(scaledSVG, settings);
+    if (constraintCheck.isValid) {
+        hideUnitWarning(elements);
+        elements.generateButton.disabled = false;
+    } else {
+        showUnitWarning(elements, constraintCheck, t);
+        elements.generateButton.disabled = true;
     }
 }
 
-// Handle split pages checkbox change
-function handleSplitPagesChange() {
-    elements.overlapGroup.style.display = elements.splitPages.checked ? 'block' : 'none';
-    updatePreview();
-}
 
 // Handle PDF generation
 async function handleGeneratePDF() {
@@ -130,9 +142,9 @@ async function handleGeneratePDF() {
         const settings = {
             paperSize: elements.paperSize.value,
             orientation: elements.orientation.value,
-            splitPages: elements.splitPages.checked,
-            overlap: parseInt(elements.overlap.value),
-            addMarks: elements.addMarks.checked,
+            splitPages: true,  // Fixed to true
+            overlap: 0,        // Fixed to 0 (no margin)
+            addMarks: true,    // Fixed to true
             scaleFactor: parseFloat(elements.scaleFactor.value)
         };
         
@@ -150,33 +162,4 @@ async function handleGeneratePDF() {
             elements.progressInfo.classList.remove('show');
         }, 3000);
     }
-}
-
-// Get grid strategy based on settings
-function getGridStrategy() {
-    const paperSizes = {
-        a4: { width: 210, height: 297 },
-        a3: { width: 297, height: 420 },
-        b4: { width: 257, height: 364 },
-        b5: { width: 182, height: 257 }
-    };
-    
-    const size = paperSizes[elements.paperSize.value];
-    const isLandscape = elements.orientation.value === 'landscape';
-    
-    const pageWidth = isLandscape ? size.height : size.width;
-    const pageHeight = isLandscape ? size.width : size.height;
-    const margin = 10;
-    const overlap = parseInt(elements.overlap.value);
-    
-    return {
-        pageWidth,
-        pageHeight,
-        margin,
-        overlap,
-        printableWidth: pageWidth - margin * 2,
-        printableHeight: pageHeight - margin * 2,
-        effectiveWidth: pageWidth - margin * 2 - overlap,
-        effectiveHeight: pageHeight - margin * 2 - overlap
-    };
 }
