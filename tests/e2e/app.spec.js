@@ -1,28 +1,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
-
-// Helper function to get the appropriate ImageMagick command based on the environment
-async function getImageMagickCommand() {
-  try {
-    // Try 'magick' command first (ImageMagick 7+)
-    await execAsync('magick -version');
-    return {
-      convert: 'magick',
-      identify: 'magick identify'
-    };
-  } catch (error) {
-    // Fall back to 'convert' and 'identify' (ImageMagick 6)
-    return {
-      convert: 'convert',
-      identify: 'identify'
-    };
-  }
-}
+import { execAsync, createTempDir, cleanupTempDir, getImageMagickCommand } from './test-helpers.js';
 
 test.describe('Sewing SVG to PDF Converter', () => {
   test('should load the application successfully', async ({ page }) => {
@@ -166,8 +145,12 @@ test.describe('Sewing SVG to PDF Converter', () => {
   // });
 
   test('should attempt PDF generation (scale=1, no scaling)', async ({ page, browserName }) => {
-    await page.goto('/');
+    // Create temporary directory for downloads
+    const tempDir = createTempDir();
     
+    try {
+      await page.goto('/');
+      
     // Upload simple test SVG with corner markers in different colors for verification
     const testSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100mm" height="100mm">
       <defs><style>.seam{stroke: #000; stroke-width:1px; fill:none}</style></defs>
@@ -280,7 +263,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
         console.log('PDF download initiated successfully:', download.suggestedFilename());
         
         // Save the PDF for content inspection
-        const downloadPath = path.join(process.cwd(), 'tests', 'e2e', 'downloads', download.suggestedFilename());
+        const downloadPath = path.join(tempDir, download.suggestedFilename());
         await download.saveAs(downloadPath);
         console.log('PDF saved to:', downloadPath);
         
@@ -465,9 +448,23 @@ test.describe('Sewing SVG to PDF Converter', () => {
         throw new Error(`Critical JavaScript errors: ${criticalErrors.join(', ')}`);
       }
     }
+    } finally {
+      // Clean up temporary directory
+      cleanupTempDir(tempDir);
+    }
   });
 
   test('should handle SVG scaling (1000mm → 1mm)', async ({ page, browserName }) => {
+    // Skip for webkit as it doesn't support download testing
+    if (browserName === 'webkit') {
+      test.skip();
+      return;
+    }
+    
+    // Create temporary directory for downloads
+    const tempDir = createTempDir();
+    
+    try {
     await page.goto('/');
     
     // Upload large SVG that needs scaling (simulating Blender plugin output)
@@ -601,7 +598,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
         console.log('Scaling PDF download initiated successfully:', download.suggestedFilename());
         
         // Save the PDF for content inspection
-        const downloadPath = path.join(process.cwd(), 'tests', 'e2e', 'downloads', download.suggestedFilename());
+        const downloadPath = path.join(tempDir, download.suggestedFilename());
         await download.saveAs(downloadPath);
         console.log('Scaling PDF saved to:', downloadPath);
         
@@ -728,6 +725,10 @@ test.describe('Sewing SVG to PDF Converter', () => {
       if (criticalErrors.length > 0) {
         throw new Error(`Critical JavaScript errors in scaling: ${criticalErrors.join(', ')}`);
       }
+    }
+    } finally {
+      // Clean up temporary directory
+      cleanupTempDir(tempDir);
     }
   });
 
@@ -966,10 +967,20 @@ test.describe('Sewing SVG to PDF Converter', () => {
   });
 
   test('should handle SVG scaling with color verification (100mm → 10mm)', async ({ page, browserName }) => {
-    await page.goto('/');
+    // Skip for webkit as it doesn't support download testing
+    if (browserName === 'webkit') {
+      test.skip();
+      return;
+    }
     
-    // Upload SVG with scaling that allows color verification (0.1 scale factor)
-    const colorTestSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100mm" height="100mm">
+    // Create temporary directory for downloads
+    const tempDir = createTempDir();
+    
+    try {
+      await page.goto('/');
+      
+      // Upload SVG with scaling that allows color verification (0.1 scale factor)
+      const colorTestSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100mm" height="100mm">
       <defs><style>.seam{stroke: #000; stroke-width:2px; fill:none}</style></defs>
       <g class="pattern-unit">
         <!-- Main rectangle -->
@@ -981,87 +992,100 @@ test.describe('Sewing SVG to PDF Converter', () => {
         <circle cx="25" cy="75" r="5" fill="#ffff00"/>  <!-- Bottom-left: Yellow -->
         <circle cx="50" cy="50" r="4" fill="#ff00ff"/>  <!-- Center: Magenta -->
       </g>
-    </svg>`;
-    
-    const buffer = Buffer.from(colorTestSvg, 'utf8');
-    await page.setInputFiles('#fileInput', {
-      name: 'color-scaling-test.svg',
-      mimeType: 'image/svg+xml',
-      buffer: buffer
-    });
-    
-    // Wait for file to load
-    await expect(page.locator('.file-info')).toBeVisible();
-    
-    // Set scale factor to 0.1 (100mm -> 10mm, circles will be 0.4-0.5mm)
-    await page.fill('#scaleFactor', '0.1');
-    await page.dispatchEvent('#scaleFactor', 'change');
-    await page.waitForTimeout(1000);
-    
-    // Click generate PDF button
-    const generateButton = page.locator('#generatePdf');
-    await expect(generateButton).toBeEnabled();
-    
-    // Listen for console messages
-    const consoleMessages = [];
-    page.on('console', msg => {
-      consoleMessages.push(`[${msg.type()}]: ${msg.text()}`);
-    });
-    
-    try {
-      // Click the button to generate PDF
-      await generateButton.click();
+      </svg>`;
       
-      // Wait for PDF generation to complete
-      await page.waitForTimeout(3000);
+      const buffer = Buffer.from(colorTestSvg, 'utf8');
+      await page.setInputFiles('#fileInput', {
+        name: 'color-scaling-test.svg',
+        mimeType: 'image/svg+xml',
+        buffer: buffer
+      });
       
-      // Verify PDF content with ImageMagick
+      // Wait for file to load
+      await expect(page.locator('.file-info')).toBeVisible();
+      
+      // Set scale factor to 0.1 (100mm -> 10mm, circles will be 0.4-0.5mm)
+      await page.fill('#scaleFactor', '0.1');
+      await page.dispatchEvent('#scaleFactor', 'change');
+      await page.waitForTimeout(1000);
+      
+      // Click generate PDF button
+      const generateButton = page.locator('#generatePdf');
+      await expect(generateButton).toBeEnabled();
+      
+      // Listen for console messages
+      const consoleMessages = [];
+      page.on('console', msg => {
+        consoleMessages.push(`[${msg.type()}]: ${msg.text()}`);
+      });
+      
       try {
-        // Convert PDF to image
-        const imageMagick = await getImageMagickCommand();
-        const pdfPath = path.join(process.cwd(), 'tests/e2e/downloads/sewing-pattern-1x1.pdf');
-        const imagePath = path.join(process.cwd(), 'tests/e2e/downloads/color-scaling-verification.png');
-        
-        console.log('Converting color scaling PDF to image for verification...');
-        await execAsync(`${imageMagick.convert} "${pdfPath}" -density 150 -background white -alpha remove "${imagePath}"`);
-        
-        // Check image stats
-        const imageStats = fs.statSync(imagePath);
-        expect(imageStats.size).toBeGreaterThan(1000); // At least 1KB
-        
-        // Analyze colors in the image
-        const histogramResult = await execAsync(`${imageMagick.convert} "${imagePath}" -format %c -depth 8 histogram:info:`);
-        const histogram = histogramResult.stdout;
-        
-        // Check for presence of different colors (more flexible pattern matching)
-        const hasRed = /red|#[F-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/i.test(histogram);
-        const hasGreen = /green|lime|#[0-9A-Fa-f][F-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/i.test(histogram);
-        const hasBlue = /blue|#[0-9A-Fa-f][0-9A-Fa-f][F-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/i.test(histogram);
-        const hasYellow = /yellow|#[F-f][F-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/i.test(histogram);
-        const hasBlack = /black|#000000/i.test(histogram);
-        
-        console.log('Color scaling detection:', {
-          hasRed, hasGreen, hasBlue, hasYellow, hasBlack
-        });
-        
-        // With 0.1 scale (10mm total), colors should be detectable
-        expect(hasBlack).toBeTruthy(); // At minimum, expect black lines
-        
-        // Count how many colors are detected (should be at least 3 for a good test)
-        const colorCount = [hasRed, hasGreen, hasBlue, hasYellow, hasBlack].filter(Boolean).length;
-        expect(colorCount).toBeGreaterThanOrEqual(3);
-        
-        console.log(`✅ Color scaling PDF contains ${colorCount} detectable colors`);
-        
-      } catch (verifyError) {
-        console.error('Color scaling PDF verification failed:', verifyError);
-        throw new Error(`Color scaling verification failed: ${verifyError.message}`);
-      }
+        // Start waiting for download before clicking
+        const downloadPromise = page.waitForEvent('download', { timeout: 10000 });
       
-    } catch (error) {
-      console.error('Color scaling test failed:', error.message);
-      console.log('Console messages:', consoleMessages);
-      throw error;
+        // Click the button to generate PDF
+        await generateButton.click();
+        
+        // Wait for download to complete
+        const download = await downloadPromise;
+        const suggestedFilename = download.suggestedFilename();
+        const downloadPath = path.join(tempDir, suggestedFilename);
+        await download.saveAs(downloadPath);
+        console.log('Color scaling PDF downloaded:', suggestedFilename);
+        
+        // Wait a bit for file to be fully written
+        await page.waitForTimeout(500);
+        
+        // Verify PDF content with ImageMagick
+        try {
+          // Convert PDF to image
+          const imageMagick = await getImageMagickCommand();
+          const imagePath = path.join(tempDir, 'color-scaling-verification.png');
+          
+          console.log('Converting color scaling PDF to image for verification...');
+          await execAsync(`${imageMagick.convert} "${downloadPath}" -density 150 -background white -alpha remove "${imagePath}"`);
+          
+          // Check image stats
+          const imageStats = fs.statSync(imagePath);
+          expect(imageStats.size).toBeGreaterThan(1000); // At least 1KB
+          
+          // Analyze colors in the image
+          const histogramResult = await execAsync(`${imageMagick.convert} "${imagePath}" -format %c -depth 8 histogram:info:`);
+          const histogram = histogramResult.stdout;
+        
+          // Check for presence of different colors (more flexible pattern matching)
+          const hasRed = /red|#[F-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/i.test(histogram);
+          const hasGreen = /green|lime|#[0-9A-Fa-f][F-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/i.test(histogram);
+          const hasBlue = /blue|#[0-9A-Fa-f][0-9A-Fa-f][F-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/i.test(histogram);
+          const hasYellow = /yellow|#[F-f][F-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/i.test(histogram);
+          const hasBlack = /black|#000000/i.test(histogram);
+          
+          console.log('Color scaling detection:', {
+            hasRed, hasGreen, hasBlue, hasYellow, hasBlack
+          });
+          
+          // With 0.1 scale (10mm total), colors should be detectable
+          expect(hasBlack).toBeTruthy(); // At minimum, expect black lines
+          
+          // Count how many colors are detected (should be at least 3 for a good test)
+          const colorCount = [hasRed, hasGreen, hasBlue, hasYellow, hasBlack].filter(Boolean).length;
+          expect(colorCount).toBeGreaterThanOrEqual(3);
+          
+          console.log(`✅ Color scaling PDF contains ${colorCount} detectable colors`);
+          
+        } catch (verifyError) {
+          console.error('Color scaling PDF verification failed:', verifyError);
+          throw new Error(`Color scaling verification failed: ${verifyError.message}`);
+        }
+        
+      } catch (error) {
+        console.error('Color scaling test failed:', error.message);
+        console.log('Console messages:', consoleMessages);
+        throw error;
+      }
+    } finally {
+      // Clean up temporary directory
+      cleanupTempDir(tempDir);
     }
   });
 });

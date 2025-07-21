@@ -31,9 +31,6 @@ coverage/
 test-results/
 playwright-report/
 
-# E2E test downloads
-tests/e2e/downloads/
-
 # IDE and editor files
 .vscode/
 .idea/
