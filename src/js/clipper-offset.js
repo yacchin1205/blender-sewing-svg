@@ -249,8 +249,8 @@ export function applySeamAllowanceWithClipper(svgElement, seamAllowance) {
             // Insert the allowance path after the original
             path.parentNode.insertBefore(allowancePath, path.nextSibling);
             
-            // Update original path style
-            path.setAttribute('stroke-dasharray', '5,5');
+            // Update original path style with finer dotted line
+            path.setAttribute('stroke-dasharray', '2,2');
         } catch (error) {
             const pathId = path.getAttribute('id') || `path-${index + 1}`;
             const errorMsg = window.i18n?.translate('seamAllowanceError', { pathId, error: error.message }) ||
