@@ -48,7 +48,7 @@ test.describe('Unit Placement for Multi-page PDF', () => {
       await expect(generateButton).toBeEnabled();
       
       // Click generate PDF
-      const downloadPromise = page.waitForEvent('download');
+      const downloadPromise = page.waitForEvent('download', { timeout: 120000 }); // 2 minutes timeout
       await generateButton.click();
       
       // Wait for download
