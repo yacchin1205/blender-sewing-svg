@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { scaleSVG, createPagedSVG, calculatePageLayout } from '../js/svg-processor.js';
+import { scaleSVG, createPagedSVG, calculatePageLayout } from '../src/js/svg-processor.js';
 
 // Test helper function
 function createTestSVG(width = 100, height = 100) {

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seam Allowance Visual Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        .test-container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f5f5f5;
+        }
+        svg {
+            border: 1px solid #ddd;
+            background: white;
+        }
+        .controls {
+            margin: 10px 0;
+        }
+        input[type="number"] {
+            width: 60px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Seam Allowance Visual Test</h1>
+    
+    <div class="controls">
+        <label>Seam Allowance (mm): 
+            <input type="number" id="seamAllowance" value="10" min="0" max="50" step="1">
+        </label>
+        <button onclick="updateSeamAllowance()">Update</button>
+    </div>
+    
+    <div class="test-container">
+        <h2>Original SVG</h2>
+        <svg id="original" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="400" height="400">
+            <defs>
+                <style>
+                    .seam {
+                        stroke: #000;
+                        stroke-width: 1px;
+                        fill: none;
+                    }
+                </style>
+            </defs>
+            <g class="pattern-unit">
+                <path class="seam" d="M 40,40 L 160,40 L 160,160 L 40,160 Z"/>
+                <text x="100" y="100" text-anchor="middle" font-size="14">Square</text>
+            </g>
+        </svg>
+    </div>
+    
+    <div class="test-container">
+        <h2>With Seam Allowance</h2>
+        <div id="result"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Debug Info</h2>
+        <pre id="debug"></pre>
+    </div>
+    
+    <script type="module">
+        import { applySeamAllowance } from '../js/seam-allowance.js';
+        
+        window.updateSeamAllowance = function() {
+            const seamAllowance = parseFloat(document.getElementById('seamAllowance').value);
+            const originalSvg = document.getElementById('original');
+            
+            // Apply seam allowance
+            const resultSvg = applySeamAllowance(originalSvg, seamAllowance);
+            
+            // Display result
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+            resultDiv.appendChild(resultSvg);
+            
+            // Debug info
+            const debugDiv = document.getElementById('debug');
+            const seamPaths = resultSvg.querySelectorAll('path.seam');
+            const allowancePaths = resultSvg.querySelectorAll('path.seam-allowance');
+            
+            let debugInfo = `Seam paths found: ${seamPaths.length}\n`;
+            debugInfo += `Allowance paths found: ${allowancePaths.length}\n\n`;
+            
+            allowancePaths.forEach((path, i) => {
+                debugInfo += `Allowance path ${i + 1}:\n`;
+                debugInfo += `  d: ${path.getAttribute('d')}\n`;
+                debugInfo += `  stroke: ${path.getAttribute('stroke')}\n`;
+                debugInfo += `  stroke-width: ${path.getAttribute('stroke-width')}\n`;
+                debugInfo += `  stroke-dasharray: ${path.getAttribute('stroke-dasharray') || 'none (solid)'}\n`;
+                debugInfo += `  fill: ${path.getAttribute('fill')}\n\n`;
+            });
+            
+            seamPaths.forEach((path, i) => {
+                debugInfo += `Original seam path ${i + 1}:\n`;
+                debugInfo += `  d: ${path.getAttribute('d')}\n`;
+                debugInfo += `  stroke-dasharray: ${path.getAttribute('stroke-dasharray') || 'none'}\n\n`;
+            });
+            
+            debugDiv.textContent = debugInfo;
+        };
+        
+        // Initial update
+        updateSeamAllowance();
+    </script>
+</body>
+</html>

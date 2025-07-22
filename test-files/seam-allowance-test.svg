@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200mm" height="200mm">
+  <defs>
+    <style>
+      .seam {
+        stroke: #000;
+        stroke-width: 1px;
+        fill: none;
+      }
+    </style>
+  </defs>
+  <g class="pattern-unit">
+    <!-- Simple rectangle piece -->
+    <path class="seam" d="M 20,20 L 80,20 L 80,80 L 20,80 Z"/>
+    <!-- Text label -->
+    <text x="50" y="50" text-anchor="middle" font-size="8">Front</text>
+  </g>
+  <g class="pattern-unit">
+    <!-- Triangle piece -->
+    <path class="seam" d="M 120,20 L 180,80 L 120,80 Z"/>
+    <!-- Text label -->
+    <text x="140" y="60" text-anchor="middle" font-size="8">Side</text>
+  </g>
+</svg>

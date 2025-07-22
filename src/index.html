@@ -4,25 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sewing SVG to PDF Converter</title>
-    <link rel="stylesheet" href="css/style.css">
-    <!-- jsPDF と svg2pdf.js をCDNから読み込み -->
-    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/svg2pdf.js@2.2.3/dist/svg2pdf.umd.min.js"></script>
-    
-    <!-- ライブラリの読み込み確認 -->
-    <script>
-        window.addEventListener('load', () => {
-            console.log('jsPDF available:', typeof window.jspdf !== 'undefined');
-            console.log('svg2pdf available:', typeof window.svg2pdf !== 'undefined');
-            
-            if (typeof window.jspdf === 'undefined') {
-                console.error('jsPDF failed to load');
-            }
-            if (typeof window.svg2pdf === 'undefined') {
-                console.error('svg2pdf.js failed to load');
-            }
-        });
-    </script>
 </head>
 <body>
     <div class="container">
@@ -58,6 +39,15 @@
                 </div>
 
                 <div class="setting-group">
+                    <h3>縫いしろ設定</h3>
+                    <div class="input-group">
+                        <label for="seamAllowance">縫いしろ幅:</label>
+                        <input type="number" id="seamAllowance" value="5" step="1" min="0" max="50">
+                        <span class="unit-label">mm</span>
+                    </div>
+                </div>
+
+                <div class="setting-group">
                     <h3>用紙設定</h3>
                     <div class="input-group">
                         <label for="paperSize">用紙サイズ:</label>
@@ -82,6 +72,11 @@
             <section class="preview-section" id="previewSection" style="display: none;">
                 <h2>プレビュー</h2>
                 <div id="svgPreview" class="svg-preview"></div>
+                <div id="pageNavigation" class="page-navigation" style="display: none;">
+                    <button id="prevPageBtn">前のページ</button>
+                    <span class="page-info" id="pageIndicator">ページ 1 / 1</span>
+                    <button id="nextPageBtn">次のページ</button>
+                </div>
                 <div id="pageInfo" class="page-info"></div>
                 <div id="unitWarning" class="unit-warning"></div>
             </section>
@@ -97,7 +92,7 @@
             <p>© 2024 Sewing SVG to PDF Converter</p>
         </footer>
     </div>
-
-    <script type="module" src="js/main.js"></script>
+    
+    <script type="module" src="/main.js"></script>
 </body>
 </html>

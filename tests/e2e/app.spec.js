@@ -763,8 +763,8 @@ test.describe('Sewing SVG to PDF Converter', () => {
     // Wait for preview to update
     await page.waitForTimeout(1000);
     
-    // Check the page info summary
-    const pageInfoText = await page.locator('.page-info').textContent();
+    // Check the page info summary (use #pageInfo to distinguish from navigation page-info)
+    const pageInfoText = await page.locator('#pageInfo').textContent();
     console.log('Page info text for scale 0.1:', pageInfoText);
     
     // Should show 100.0mm × 100.0mm (1000mm * 0.1 = 100mm), not 1.0mm × 1.0mm
@@ -777,7 +777,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
     await page.dispatchEvent('#scaleFactor', 'change');
     await page.waitForTimeout(1000);
     
-    const pageInfoText2 = await page.locator('.page-info').textContent();
+    const pageInfoText2 = await page.locator('#pageInfo').textContent();
     console.log('Page info text for scale 0.01:', pageInfoText2);
     
     // Should show 10.0mm × 10.0mm
@@ -789,7 +789,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
     await page.dispatchEvent('#scaleFactor', 'change');
     await page.waitForTimeout(1000);
     
-    const pageInfoText3 = await page.locator('.page-info').textContent();
+    const pageInfoText3 = await page.locator('#pageInfo').textContent();
     console.log('Page info text for scale 0.001:', pageInfoText3);
     
     // Should show 1.0mm × 1.0mm
@@ -802,7 +802,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
     // splitPages is now fixed to true
     await page.waitForTimeout(1000);
     
-    const pageInfoText4 = await page.locator('.page-info').textContent();
+    const pageInfoText4 = await page.locator('#pageInfo').textContent();
     console.log('Page info text for scale 0.1 with split pages:', pageInfoText4);
     
     // Should still show 100.0mm × 100.0mm but may have multiple pages
@@ -851,7 +851,11 @@ test.describe('Sewing SVG to PDF Converter', () => {
     // Check warning content
     const warningText = await unitWarning.textContent();
     expect(warningText).toContain('pattern-piece'); // Should contain unit class name
-    expect(warningText).toMatch(/270\.0mm.*180\.0mm/); // Should contain scaled unit dimensions (0.9 scale)
+    // With default 5mm seam allowance (adjusted by scale factor):
+    // Adjusted seam allowance: 5/0.9 = 5.556mm in original coordinates
+    // Unit becomes: 300 + 2*5.556 = 311.11, 200 + 2*5.556 = 211.11
+    // After 0.9 scale: 311.11*0.9 = 280.0, 211.11*0.9 = 190.0
+    expect(warningText).toMatch(/280\.0mm.*190\.0mm/); // Should contain scaled unit dimensions with seam allowance
     
     // Check that PDF generation button is disabled
     const generateButton = page.locator('#generatePdf');
@@ -947,24 +951,6 @@ test.describe('Sewing SVG to PDF Converter', () => {
     await expect(generateButton).toBeEnabled();
   });
 
-  test('should handle libraries loading', async ({ page }) => {
-    await page.goto('/');
-    
-    // Check if required libraries are loaded
-    const jsPDFLoaded = await page.evaluate(() => {
-      return typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined';
-    });
-    
-    const svg2pdfLoaded = await page.evaluate(() => {
-      return typeof window.svg2pdf !== 'undefined' && typeof window.svg2pdf.svg2pdf === 'function';
-    });
-    
-    console.log('jsPDF loaded:', jsPDFLoaded);
-    console.log('svg2pdf loaded:', svg2pdfLoaded);
-    
-    expect(jsPDFLoaded).toBeTruthy();
-    expect(svg2pdfLoaded).toBeTruthy();
-  });
 
   test('should handle SVG scaling with color verification (100mm → 10mm)', async ({ page, browserName }) => {
     // Skip for webkit as it doesn't support download testing

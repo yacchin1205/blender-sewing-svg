@@ -1,8 +1,8 @@
 import { describe, test, expect, vi } from 'vitest';
-import { calculateUnitPlacement, createPlacedUnitsSVG } from '../js/unit-placement.js';
+import { calculateUnitPlacement, createPlacedUnitsSVG } from '../src/js/unit-placement.js';
 
 // Mock analyzeSVGUnits to avoid DOM dependencies
-vi.mock('../js/svg-processor.js', () => ({
+vi.mock('../src/js/svg-processor.js', () => ({
   analyzeSVGUnits: vi.fn((svgElement) => {
     // Return mock units based on test SVG structure
     const mockUnits = svgElement.mockUnits || [];
@@ -20,24 +20,25 @@ describe('Unit Placement Algorithm', () => {
   test('should place all units when they fit on one page', () => {
     // Create mock SVG with units
     const svg = { 
+      querySelectorAll: () => [],
       mockUnits: [
         {
           index: 0,
-          element: {},
+          element: { querySelector: () => null },
           width: 50,
           height: 50,
           boundingBox: { x: 0, y: 0, width: 50, height: 50 }
         },
         {
           index: 1,
-          element: {},
+          element: { querySelector: () => null },
           width: 50,
           height: 50,
           boundingBox: { x: 60, y: 0, width: 50, height: 50 }
         },
         {
           index: 2,
-          element: {},
+          element: { querySelector: () => null },
           width: 50,
           height: 50,
           boundingBox: { x: 0, y: 60, width: 50, height: 50 }
@@ -54,17 +55,18 @@ describe('Unit Placement Algorithm', () => {
   
   test('should create multiple pages when units do not fit on one page', () => {
     const svg = {
+      querySelectorAll: () => [],
       mockUnits: [
         {
           index: 0,
-          element: {},
+          element: { querySelector: () => null },
           width: 180,
           height: 260,
           boundingBox: { x: 0, y: 0, width: 180, height: 260 }
         },
         {
           index: 1,
-          element: {},
+          element: { querySelector: () => null },
           width: 180,
           height: 260,
           boundingBox: { x: 0, y: 0, width: 180, height: 260 }
@@ -82,17 +84,18 @@ describe('Unit Placement Algorithm', () => {
   
   test('should mark units as unplaced when they are too large', () => {
     const svg = {
+      querySelectorAll: () => [],
       mockUnits: [
         {
           index: 0,
-          element: {},
+          element: { querySelector: () => null },
           width: 50,
           height: 50,
           boundingBox: { x: 0, y: 0, width: 50, height: 50 }
         },
         {
           index: 1,
-          element: {},
+          element: { querySelector: () => null },
           width: 200,
           height: 300,
           boundingBox: { x: 0, y: 0, width: 200, height: 300 }
@@ -108,7 +111,7 @@ describe('Unit Placement Algorithm', () => {
   });
   
   test('should handle empty SVG', () => {
-    const svg = { mockUnits: [] };
+    const svg = { querySelectorAll: () => [], mockUnits: [] };
     
     const placement = calculateUnitPlacement(svg, gridStrategy);
     
@@ -118,17 +121,18 @@ describe('Unit Placement Algorithm', () => {
   
   test('should avoid overlapping units on the same page', () => {
     const svg = {
+      querySelectorAll: () => [],
       mockUnits: [
         {
           index: 0,
-          element: {},
+          element: { querySelector: () => null },
           width: 100,
           height: 100,
           boundingBox: { x: 0, y: 0, width: 100, height: 100 }
         },
         {
           index: 1,
-          element: {},
+          element: { querySelector: () => null },
           width: 100,
           height: 100,
           boundingBox: { x: 50, y: 50, width: 100, height: 100 }
