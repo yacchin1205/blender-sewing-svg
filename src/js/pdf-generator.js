@@ -1,42 +1,40 @@
 import { scaleSVG } from './svg-processor.js';
 import { calculateUnitPlacement, createPlacedUnitsSVG } from './unit-placement.js';
+import { applySeamAllowance } from './seam-allowance.js';
+import { jsPDF } from 'jspdf';
+import { svg2pdf } from 'svg2pdf.js';
 
 // Main PDF generation function
 export async function generatePDF(svgElement, settings) {
     console.log('Starting PDF generation with settings:', settings);
     
-    const { jsPDF } = window.jspdf;
-    
-    if (!jsPDF) {
-        console.error('jsPDF not available');
-        throw new Error('jsPDF library not loaded');
-    }
-    
-    if (!window.svg2pdf || !window.svg2pdf.svg2pdf) {
-        console.error('svg2pdf not available');
-        throw new Error('svg2pdf.js library not loaded');
-    }
-    
-    // Get the actual svg2pdf function from the module
-    const svg2pdf = window.svg2pdf.svg2pdf;
-    
     console.log('Libraries loaded successfully');
     
-    // Clone SVG and apply scale correction
-    const scaledSVG = svgElement.cloneNode(true);
-    const originalViewBox = svgElement.viewBox?.baseVal;
-    console.log('Original SVG viewBox:', {
+    // Use the provided SVG which already has seam allowance applied from main.js
+    let processedSVG = svgElement.cloneNode(true);
+    
+    // The SVG is already scaled and has seam allowance applied from main.js
+    // No need to scale again
+    const scaledSVG = processedSVG;
+    
+    const originalViewBox = processedSVG.viewBox?.baseVal;
+    console.log('SVG viewBox:', {
         x: originalViewBox?.x,
         y: originalViewBox?.y, 
         width: originalViewBox?.width,
         height: originalViewBox?.height
     });
-    console.log('Original SVG attributes:', {
-        width: svgElement.getAttribute('width'),
-        height: svgElement.getAttribute('height')
+    console.log('SVG attributes:', {
+        width: processedSVG.getAttribute('width'),
+        height: processedSVG.getAttribute('height')
     });
     
-    scaleSVG(scaledSVG, settings.scaleFactor || 0.001);
+    // Adjust stroke-width for seam-allowance paths to be scale-independent
+    const seamAllowancePaths = scaledSVG.querySelectorAll('path.seam-allowance');
+    seamAllowancePaths.forEach(path => {
+        // Set stroke-width to a fixed value that looks good regardless of scale
+        path.setAttribute('stroke-width', '2');
+    });
     
     const scaledViewBox = scaledSVG.viewBox?.baseVal;
     console.log('Scaled SVG viewBox:', {
@@ -91,8 +89,6 @@ export async function generatePDF(svgElement, settings) {
 // Generate single page PDF
 async function generateSinglePagePDF(svgElement, settings) {
     console.log('Generating single page PDF');
-    
-    const { jsPDF } = window.jspdf;
     const gridStrategy = getGridStrategy(settings);
     
     console.log('Grid strategy:', gridStrategy);
@@ -132,7 +128,7 @@ async function generateSinglePagePDF(svgElement, settings) {
         window.getComputedStyle(pagedSVG).display;
         
         // Draw SVG to PDF
-        await window.svg2pdf.svg2pdf(pagedSVG, doc, {
+        await svg2pdf(pagedSVG, doc, {
             x: gridStrategy.margin,
             y: gridStrategy.margin,
             width: gridStrategy.printableWidth,
@@ -152,8 +148,6 @@ async function generateSinglePagePDF(svgElement, settings) {
 
 // Generate multi-page PDF
 async function generateMultiPagePDF(svgElement, settings) {
-    const { jsPDF } = window.jspdf;
-    const svg2pdf = window.svg2pdf.svg2pdf;
     const gridStrategy = getGridStrategy(settings);
     
     // Calculate unit placement to avoid cutting units across pages
@@ -279,7 +273,7 @@ function addPageMarks(svgElement, pageIndex, totalPages, gridStrategy) {
 }
 
 // 用紙設定に基づくグリッド戦略の取得
-function getGridStrategy(settings) {
+export function getGridStrategy(settings) {
     const paperSizes = {
         a4: { width: 210, height: 297 },
         a3: { width: 297, height: 420 },
@@ -303,7 +297,8 @@ function getGridStrategy(settings) {
         printableWidth: pageWidth - margin * 2,
         printableHeight: pageHeight - margin * 2,
         effectiveWidth: pageWidth - margin * 2 - overlap,
-        effectiveHeight: pageHeight - margin * 2 - overlap
+        effectiveHeight: pageHeight - margin * 2 - overlap,
+        seamAllowance: settings.seamAllowance || 0
     };
 }
 
@@ -311,22 +306,16 @@ function getGridStrategy(settings) {
 export function calculatePageInfo(svgElement, settings) {
     if (!svgElement) return null;
     
+    // svgElementは既にスケール済みなので、現在のサイズを使用
     const viewBox = svgElement.viewBox.baseVal;
-    const scaleFactor = settings.scaleFactor || 0.001;
-    const width = viewBox.width * scaleFactor;
-    const height = viewBox.height * scaleFactor;
+    const width = viewBox.width;
+    const height = viewBox.height;
     
     let pageCount = 1;
     if (settings.splitPages) {
         const gridStrategy = getGridStrategy(settings);
-        // スケール済みSVGでユニット配置を計算
-        const tempSVG = svgElement.cloneNode(true);
-        tempSVG.setAttribute('viewBox', `0 0 ${width} ${height}`);
-        tempSVG.setAttribute('width', `${width}mm`);
-        tempSVG.setAttribute('height', `${height}mm`);
-        scaleSVG(tempSVG, scaleFactor);
-        
-        const placement = calculateUnitPlacement(tempSVG, gridStrategy);
+        // 既にスケール済みのSVGを使用
+        const placement = calculateUnitPlacement(svgElement, gridStrategy);
         pageCount = placement.pages.length || 1;
     }
     

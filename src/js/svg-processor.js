@@ -230,40 +230,64 @@ export function analyzeSVGUnits(svgElement) {
 }
 
 // Calculate bounding box for an SVG element (g, path, etc.)
-function getElementBoundingBox(element) {
+export function getElementBoundingBox(element) {
     try {
-        // Create a temporary SVG to calculate bounding box
-        const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        const clonedElement = element.cloneNode(true);
-        tempSvg.appendChild(clonedElement);
+        // Ensure element is in DOM for bbox calculation
+        let needsCleanup = false;
+        let tempContainer = null;
         
-        // Temporarily add to DOM for measurement
-        tempSvg.style.position = 'absolute';
-        tempSvg.style.top = '-9999px';
-        tempSvg.style.left = '-9999px';
-        tempSvg.style.width = '1000px';
-        tempSvg.style.height = '1000px';
-        document.body.appendChild(tempSvg);
+        if (!element.ownerDocument || !element.isConnected) {
+            // Element not in DOM, create temporary container
+            tempContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.visibility = 'hidden';
+            tempContainer.style.width = '10000px';
+            tempContainer.style.height = '10000px';
+            
+            const clonedElement = element.cloneNode(true);
+            tempContainer.appendChild(clonedElement);
+            document.body.appendChild(tempContainer);
+            element = clonedElement;
+            needsCleanup = true;
+        }
         
-        const bbox = clonedElement.getBBox();
+        // Get bounding box in local coordinates
+        const bbox = element.getBBox();
+        
+        // Check if element has a transform
+        const transform = element.getAttribute('transform');
+        let offsetX = 0, offsetY = 0;
+        
+        if (transform) {
+            // Parse translate transform
+            const translateMatch = transform.match(/translate\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/);
+            if (translateMatch) {
+                offsetX = parseFloat(translateMatch[1]);
+                offsetY = parseFloat(translateMatch[2]);
+            }
+        }
+        
+        // Apply transform offset to bounding box
         const result = {
-            x: bbox.x,
-            y: bbox.y,
+            x: bbox.x + offsetX,
+            y: bbox.y + offsetY,
             width: bbox.width,
             height: bbox.height,
-            minX: bbox.x,
-            minY: bbox.y,
-            maxX: bbox.x + bbox.width,
-            maxY: bbox.y + bbox.height
+            minX: bbox.x + offsetX,
+            minY: bbox.y + offsetY,
+            maxX: bbox.x + bbox.width + offsetX,
+            maxY: bbox.y + bbox.height + offsetY
         };
         
-        // Clean up
-        document.body.removeChild(tempSvg);
+        // Cleanup if needed
+        if (needsCleanup && tempContainer) {
+            document.body.removeChild(tempContainer);
+        }
         
         return result;
     } catch (error) {
-        console.warn('Failed to calculate bounding box for element:', error);
-        return null;
+        console.error('Failed to calculate bounding box for element:', error);
+        throw new Error(`Failed to calculate bounding box for element: ${error.message}`);
     }
 }
 

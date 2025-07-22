@@ -19,20 +19,29 @@ Seams to Sewing PatternプラグインはBlenderの単位系を認識できず�
   - width/height属性
   - stroke-width（線の太さ）の比例補正
 
-### 2. 印刷レイアウト機能
+### 2. 縫いしろ機能
 
-- **用紙サイズ**: A4、A3、B4、B5等から選択可能
-- **分割印刷**: 大きな型紙を複数ページに自動分割
-- **のりしろ**: 5-10mm程度の重なり部分を追加
+- **縫いしろ幅**: 0-50mm の範囲で設定可能（デフォルト: 5mm）
+- **スケール補正後に適用**: 実際の寸法で正確な縫いしろを追加
+- **視覚的識別**: 縫いしろは点線で表示
+
+### 3. 印刷レイアウト機能
+
+- **用紙サイズ**: A4、A3、B4、B5から選択可能
+- **用紙の向き**: 縦向き、横向きを選択可能
+- **マルチページ印刷**: 大きな型紙を複数ページに自動分割
+  - パターンユニットを識別して配置
+  - ユニットがページをまたがないよう最適化
+  - 縫いしろを考慮した配置（重なり防止）
 - **印刷補助**:
   - ページ番号の自動付与
-  - 位置合わせマーク（十字線など）
-  - カットライン表示
+  - 位置合わせマーク（コーナーマーク）
 
-### 3. その他の機能
+### 4. その他の機能
 
 - **一括ダウンロード**: 全ページをまとめたPDFファイル
 - **ドラッグ&ドロップ**: SVGファイルの簡単な読み込み
+- **多言語対応**: 日本語/英語（ブラウザ設定により自動切替）
 
 ## 技術仕様
 
@@ -106,24 +115,52 @@ http://localhost:8000
 
 ```
 sewing-svg-to-pdf/
-├── index.html
-├── css/
-│   └── style.css
-├── js/
-│   ├── main.js
-│   ├── svg-processor.js
-│   ├── pdf-generator.js
-│   └── ui-controller.js
+├── src/                      # ソースコード
+│   ├── index.html
+│   ├── main.js              # Viteエントリーポイント
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       ├── main.js
+│       ├── svg-processor.js
+│       ├── pdf-generator.js
+│       ├── ui-controller.js
+│       ├── i18n.js          # 国際化対応
+│       ├── unit-placement.js # ユニット配置エンジン
+│       ├── seam-allowance.js # 縫いしろ処理
+│       └── clipper-offset.js # Clipper.js統合
+├── dist/                     # ビルド成果物（Vite）
+├── test/                     # ユニットテスト
+│   ├── svg-processor.test.js
+│   ├── unit-placement.test.js
+│   └── seam-allowance.test.js
+├── tests/e2e/               # E2Eテスト（Playwright）
 ├── resources/
 │   └── example.svg
+├── test-files/              # テスト用SVGファイル
+├── package.json
+├── vite.config.js           # Vite設定
+├── playwright.config.js     # Playwright設定
 └── CLAUDE.md
 ```
 
-svg2pdf等はCDNから読み込むため、特別なディレクトリは不要。参考: https://github.com/yWorks/svg2pdf.js
+### 依存関係管理
 
-```
-<script src="[node_modules|bower_components]/jspdf/dist/jspdf.umd.min.js"></script>
-<script src="[node_modules|bower_components]/svg2pdf.js/dist/svg2pdf.umd.min.js"></script>
+npmを使用してパッケージを管理：
+
+```json
+{
+  "dependencies": {
+    "jspdf": "^2.5.1",
+    "svg2pdf.js": "^2.2.3",
+    "clipper-lib": "^6.4.2"
+  },
+  "devDependencies": {
+    "vite": "^7.0.5",
+    "vitest": "^2.1.8",
+    "@playwright/test": "^1.49.1"
+  }
+}
 ```
 
 ## 実装のポイント

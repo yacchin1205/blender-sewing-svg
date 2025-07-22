@@ -145,6 +145,12 @@ main {
     width: 120px;
 }
 
+.unit-label {
+    margin-left: 8px;
+    font-size: 14px;
+    color: #718096;
+}
+
 .help-text {
     display: block;
     margin-left: 150px;
@@ -281,6 +287,44 @@ main {
 
 .progress-info.show {
     display: block;
+}
+
+/* ページナビゲーション */
+.page-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f7fafc;
+    border-radius: 4px;
+}
+
+.page-navigation button {
+    padding: 8px 16px;
+    background-color: #4299e1;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.page-navigation button:hover:not(:disabled) {
+    background-color: #3182ce;
+}
+
+.page-navigation button:disabled {
+    background-color: #cbd5e0;
+    cursor: not-allowed;
+}
+
+.page-navigation .page-info {
+    font-size: 14px;
+    color: #4a5568;
+    font-weight: 500;
 }
 
 /* フッター */

@@ -4,7 +4,10 @@
   "description": "Convert Blender Seams to Sewing Pattern SVG files to printable PDFs",
   "type": "module",
   "scripts": {
-    "dev": "python -m http.server 8000",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "npm run build && python -m http.server 8000 --directory dist",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
@@ -28,5 +31,10 @@
     "happy-dom": "^18.0.1",
     "vite": "^7.0.5",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "clipper-lib": "^6.4.2",
+    "jspdf": "^3.0.1",
+    "svg2pdf.js": "^2.5.0"
   }
 }

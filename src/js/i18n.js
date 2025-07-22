@@ -14,6 +14,9 @@ const translations = {
         settingsTitle: 'Settings',
         scaleCorrection: 'Scale Correction',
         scaleFactor: 'Scale factor:',
+        seamAllowanceSettings: 'Seam Allowance',
+        seamAllowance: 'Seam allowance width:',
+        seamAllowanceUnit: 'mm',
         paperSettings: 'Paper Settings',
         paperSize: 'Paper size:',
         orientation: 'Orientation:',
@@ -59,6 +62,11 @@ const translations = {
         pageSizeFormat: 'Max page size: {width}mm × {height}mm',
         unitSuggestion: 'Try using a larger paper size (A3 instead of A4) or reduce the scale factor to make the units smaller.',
         
+        // Seam allowance errors
+        seamAllowanceError: 'Seam allowance error ({pathId}): {error}',
+        pathHasTooFewPoints: 'Path has too few points for offset: {points}',
+        offsetAlgorithmFailed: 'Offset algorithm returned no polygons',
+        
         // Footer
         copyright: '© 2024 Sewing SVG to PDF Converter'
     },
@@ -76,6 +84,9 @@ const translations = {
         settingsTitle: '設定',
         scaleCorrection: 'スケール補正',
         scaleFactor: 'スケール係数:',
+        seamAllowanceSettings: '縫いしろ設定',
+        seamAllowance: '縫いしろ幅:',
+        seamAllowanceUnit: 'mm',
         paperSettings: '用紙設定',
         paperSize: '用紙サイズ:',
         orientation: '向き:',
@@ -120,6 +131,11 @@ const translations = {
         unitSizeFormat: 'ユニットサイズ: {width}mm × {height}mm',
         pageSizeFormat: '最大ページサイズ: {width}mm × {height}mm',
         unitSuggestion: 'より大きな用紙サイズ（A4からA3など）を使用するか、スケール係数を小さくしてユニットを縮小してください。',
+        
+        // Seam allowance errors
+        seamAllowanceError: '縫いしろ作成エラー ({pathId}): {error}',
+        pathHasTooFewPoints: 'パスのポイント数が少なすぎます: {points}',
+        offsetAlgorithmFailed: 'オフセットアルゴリズムがポリゴンを返しませんでした',
         
         // Footer
         copyright: '© 2024 Sewing SVG to PDF Converter'
