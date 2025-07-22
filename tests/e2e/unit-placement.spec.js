@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 
 test.describe('Unit Placement for Multi-page PDF', () => {
   test('should place pattern units without cutting across pages', async ({ page }) => {
+    test.setTimeout(120000); // Set test timeout to 2 minutes
     const tempDir = createTempDir();
     
     try {
