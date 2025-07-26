@@ -27,11 +27,11 @@
     <text x="70" y="285" text-anchor="middle" font-size="10">SLEEVE</text>
   </g>
   
-  <!-- Pattern unit 4: Collar (180x80mm) - fits on A4 -->
+  <!-- Pattern unit 4: Collar (160x80mm) - fits on A4 with seam allowance and margin -->
   <g id="collar-piece" class="pattern-unit">
-    <rect x="150" y="210" width="180" height="80" class="unit"/>
-    <path d="M 150,210 L 330,210 L 330,290 L 150,290 Z" class="seam"/>
-    <text x="240" y="250" text-anchor="middle" font-size="10">COLLAR</text>
+    <rect x="150" y="210" width="160" height="80" class="unit"/>
+    <path d="M 150,210 L 310,210 L 310,290 L 150,290 Z" class="seam"/>
+    <text x="230" y="250" text-anchor="middle" font-size="10">COLLAR</text>
   </g>
   
   <!-- Pattern unit 5: Pocket (80x80mm) - fits on A4 -->

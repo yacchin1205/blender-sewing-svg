@@ -370,7 +370,7 @@ async function generateMultiPagePDF(svgElement, settings) {
         
     } catch (error) {
         console.error('PDF生成エラー:', error);
-        throw new Error('PDFの生成に失敗しました');
+        throw error; // Re-throw the original error for better debugging
     }
 }
 
