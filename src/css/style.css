@@ -327,6 +327,122 @@ main {
     font-weight: 500;
 }
 
+/* Texture mapping styles */
+.texture-settings {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f7fafc;
+    border-radius: 4px;
+}
+
+.texture-settings h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #2d3748;
+}
+
+.texture-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.texture-info #selectedPieceName {
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.upload-button {
+    display: inline-block;
+    padding: 6px 16px;
+    background-color: #4299e1;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.upload-button:hover {
+    background-color: #3182ce;
+}
+
+.texture-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.texture-controls .input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.texture-controls .input-group label {
+    min-width: 60px;
+}
+
+.texture-controls input[type="number"] {
+    width: 80px;
+}
+
+/* Pattern piece hover/selection */
+.pattern-unit,
+.pattern-piece {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.pattern-unit:hover,
+.pattern-piece:hover {
+    opacity: 0.8;
+}
+
+.pattern-unit.selected,
+.pattern-piece.selected {
+    filter: drop-shadow(0 0 5px #4299e1);
+}
+
+/* Seam path hover effect */
+.seam,
+.seam-allowance {
+    cursor: pointer;
+    transition: stroke 0.2s;
+}
+
+/* Hover state applied via JavaScript */
+.pattern-piece.hover .seam,
+.pattern-piece.hover .seam-allowance,
+.pattern-unit.hover .seam,
+.pattern-unit.hover .seam-allowance {
+    stroke: #4299e1;
+}
+
+/* Texture image styles */
+.texture-image {
+    pointer-events: none;
+}
+
+.pattern-unit.selected .texture-image,
+.pattern-piece.selected .texture-image {
+    pointer-events: all;
+    opacity: 0.7;
+}
+
+/* Ensure seam paths are transparent but clickable */
+.seam {
+    fill: transparent !important;
+    pointer-events: all !important;
+}
+
+.seam-allowance {
+    fill: transparent !important;
+    pointer-events: all !important;
+}
+
 /* フッター */
 footer {
     text-align: center;

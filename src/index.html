@@ -72,6 +72,41 @@
             <section class="preview-section" id="previewSection" style="display: none;">
                 <h2>プレビュー</h2>
                 <div id="svgPreview" class="svg-preview"></div>
+                
+                <!-- テクスチャ設定セクション -->
+                <div id="textureSettings" class="texture-settings" style="display: none;">
+                    <h3>テクスチャ設定</h3>
+                    <div class="texture-info">
+                        <span id="selectedPieceName">選択なし</span>
+                        <label class="upload-button">
+                            <input type="file" accept="image/*" id="textureImageInput" style="display: none;">
+                            <span>画像を選択</span>
+                        </label>
+                        <button id="removeTextureBtn" style="display: none;">削除</button>
+                    </div>
+                    <div id="textureControls" class="texture-controls" style="display: none;">
+                        <div class="input-group">
+                            <label>拡大率:</label>
+                            <input type="number" id="textureScale" value="100" step="5" min="10" max="500">
+                            <span class="unit-label">%</span>
+                        </div>
+                        <div class="input-group">
+                            <label>回転:</label>
+                            <input type="number" id="textureRotation" value="0" step="5" min="-180" max="180">
+                            <span class="unit-label">°</span>
+                        </div>
+                        <div class="input-group">
+                            <label>X位置:</label>
+                            <input type="number" id="textureOffsetX" value="0" step="5">
+                            <span class="unit-label">mm</span>
+                        </div>
+                        <div class="input-group">
+                            <label>Y位置:</label>
+                            <input type="number" id="textureOffsetY" value="0" step="5">
+                            <span class="unit-label">mm</span>
+                        </div>
+                    </div>
+                </div>
                 <div id="pageNavigation" class="page-navigation" style="display: none;">
                     <button id="prevPageBtn">前のページ</button>
                     <span class="page-info" id="pageIndicator">ページ 1 / 1</span>
