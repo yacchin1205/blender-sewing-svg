@@ -7,13 +7,11 @@ import { analyzeSVGUnits, getElementBoundingBox } from './svg-processor.js';
 function analyzeUnitsWithSeamAllowance(svgElement) {
     // First, check if the SVG has any seam-allowance paths at all
     const allSeamAllowancePaths = svgElement.querySelectorAll('path.seam-allowance');
-    console.log(`Total seam-allowance paths in SVG: ${allSeamAllowancePaths.length}`);
     
     const units = analyzeSVGUnits(svgElement);
     
     // If there are seam allowance paths, we need to recalculate all unit bounds
     if (allSeamAllowancePaths.length > 0) {
-        console.log('Seam allowance detected - recalculating all unit bounds');
         
         units.forEach(unit => {
             // For units with seam allowance, the bounding box needs to include the expanded area
@@ -21,7 +19,6 @@ function analyzeUnitsWithSeamAllowance(svgElement) {
             const seamPaths = unit.element.querySelectorAll('path.seam');
             const seamAllowancePaths = unit.element.querySelectorAll('path.seam-allowance');
             
-            console.log(`Unit ${unit.index}: ${seamPaths.length} seam paths, ${seamAllowancePaths.length} seam-allowance paths`);
             
             if (seamAllowancePaths.length > 0) {
                 // Recalculate bounding box to include all paths
@@ -37,8 +34,6 @@ function analyzeUnitsWithSeamAllowance(svgElement) {
                     unit.width = newBBox.width;
                     unit.height = newBBox.height;
                     
-                    console.log(`Unit ${unit.index} with seam allowance: ${unit.width.toFixed(1)}×${unit.height.toFixed(1)}mm (was ${oldWidth.toFixed(1)}×${oldHeight.toFixed(1)}mm)`);
-                    console.log(`Unit ${unit.index} position updated from (${oldBBox.x},${oldBBox.y}) to (${newBBox.x},${newBBox.y})`);
                 }
             }
         });
@@ -58,7 +53,6 @@ export function calculateUnitPlacement(svgElement, gridStrategy) {
         return { pages: [], unplacedUnits: [] };
     }
     
-    console.log(`Starting unit placement for ${units.length} units with seam allowance consideration`);
     
     // Sort units by area (larger first) for better packing
     const sortedUnits = [...units].sort((a, b) => {
@@ -68,7 +62,6 @@ export function calculateUnitPlacement(svgElement, gridStrategy) {
     });
     
     // Check if units overlap in their original positions and mark them
-    console.log('Checking for overlaps in original positions...');
     const overlappingPairs = new Set();
     
     for (let i = 0; i < units.length; i++) {
@@ -90,12 +83,7 @@ export function calculateUnitPlacement(svgElement, gridStrategy) {
                 height: unit2.height
             };
             
-            console.log(`Checking overlap between unit ${unit1.index} and ${unit2.index}:`);
-            console.log(`  Unit ${unit1.index}: x=${rect1.x}, y=${rect1.y}, w=${rect1.width}, h=${rect1.height}`);
-            console.log(`  Unit ${unit2.index}: x=${rect2.x}, y=${rect2.y}, w=${rect2.width}, h=${rect2.height}`);
-            
             if (rectanglesOverlap(rect1, rect2)) {
-                console.log(`Units ${unit1.index} and ${unit2.index} overlap in original positions!`);
                 overlappingPairs.add(`${unit1.index}-${unit2.index}`);
                 // Mark units as originally overlapping
                 unit1.originallyOverlapping = true;
@@ -132,7 +120,6 @@ export function calculateUnitPlacement(svgElement, gridStrategy) {
         }
     }
     
-    console.log(`Placement complete: ${pages.length} pages, ${unplacedUnits.length} unplaced units`);
     
     return {
         pages,
@@ -161,7 +148,6 @@ function tryPlaceUnitOnPage(unit, page, gridStrategy, overlappingPairs) {
             const pair1 = `${unit.index}-${placedUnit.index}`;
             const pair2 = `${placedUnit.index}-${unit.index}`;
             if (overlappingPairs.has(pair1) || overlappingPairs.has(pair2)) {
-                console.log(`Unit ${unit.index} originally overlapped with unit ${placedUnit.index}, placing on different page`);
                 return false;
             }
         }
@@ -252,18 +238,12 @@ function canPlaceAt(x, y, width, height, occupiedAreas) {
 
 // Check if two rectangles overlap
 function rectanglesOverlap(rect1, rect2) {
-    const overlap = !(
+    return !(
         rect1.x + rect1.width <= rect2.x ||
         rect2.x + rect2.width <= rect1.x ||
         rect1.y + rect1.height <= rect2.y ||
         rect2.y + rect2.height <= rect1.y
     );
-    
-    if (overlap) {
-        console.log(`Rectangle overlap detected: [${rect1.x},${rect1.y},${rect1.width},${rect1.height}] vs [${rect2.x},${rect2.y},${rect2.width},${rect2.height}]`);
-    }
-    
-    return overlap;
 }
 
 // Create SVG for a specific page with placed units

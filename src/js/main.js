@@ -162,7 +162,6 @@ function displayPreviewWithPlacement() {
     const settings = {
         paperSize: elements.paperSize.value,
         orientation: elements.orientation.value,
-        splitPages: true,
         overlap: 0,
         addMarks: true,
         scaleFactor: parseFloat(elements.scaleFactor.value),
@@ -217,7 +216,6 @@ function updatePageDisplay() {
     const settings = {
         paperSize: elements.paperSize.value,
         orientation: elements.orientation.value,
-        splitPages: true,
         overlap: 0,
         addMarks: true,
         scaleFactor: parseFloat(elements.scaleFactor.value),
@@ -256,7 +254,6 @@ function updatePageInfo() {
     const settings = {
         paperSize: elements.paperSize.value,
         orientation: elements.orientation.value,
-        splitPages: true,  // Fixed to true
         overlap: 0,        // Fixed to 0 (no margin)
         addMarks: true,    // Fixed to true
         scaleFactor: parseFloat(elements.scaleFactor.value),
@@ -272,7 +269,7 @@ function updatePageInfo() {
         `;
         
         // Add unit placement info if multiple pages
-        if (settings.splitPages && pageInfo.pageCount > 1) {
+        if (pageInfo.pageCount > 1) {
             const units = analyzeSVGUnits(scaledSVG);
             if (units.length > 0) {
                 infoHtml += `<br>${t('unitsLabel') || 'Pattern pieces:'} ${units.length}`;
@@ -308,8 +305,7 @@ async function handleGeneratePDF() {
         const settings = {
             paperSize: elements.paperSize.value,
             orientation: elements.orientation.value,
-            splitPages: true,  // Fixed to true
-            overlap: 0,        // Fixed to 0 (no margin)
+                overlap: 0,        // Fixed to 0 (no margin)
             addMarks: true,    // Fixed to true
             scaleFactor: parseFloat(elements.scaleFactor.value),
             seamAllowance: parseFloat(elements.seamAllowance.value)

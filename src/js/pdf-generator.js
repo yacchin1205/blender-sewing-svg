@@ -4,6 +4,216 @@ import { applySeamAllowance } from './seam-allowance.js';
 import { jsPDF } from 'jspdf';
 import { svg2pdf } from 'svg2pdf.js';
 
+// Prepare SVG for PDF export by reorganizing elements for texture display
+async function prepareSVGForPDF(svgElement) {
+    // Remove clip-path attributes since svg2pdf.js doesn't support them
+    const textureImages = svgElement.querySelectorAll('.texture-image');
+    textureImages.forEach(image => {
+        image.removeAttribute('clip-path');
+    });
+    if (textureImages.length > 0) {
+        console.log(`Removed clip-path from ${textureImages.length} texture images`);
+    }
+    
+    // Make all seam and seam-allowance paths transparent
+    const seamPaths = svgElement.querySelectorAll('.seam, .seam-allowance');
+    seamPaths.forEach(path => {
+        // Ensure fill is transparent to show textures
+        path.style.fill = 'transparent';
+        path.setAttribute('fill', 'transparent');
+        // Keep stroke visible
+        if (!path.style.stroke && !path.getAttribute('stroke')) {
+            path.style.stroke = '#000';
+        }
+    });
+    if (seamPaths.length > 0) {
+        console.log(`Made ${seamPaths.length} seam paths transparent for PDF`);
+    }
+    
+    // Try Canvas clipping approach
+    try {
+        await clipTexturesToPatternShapes(svgElement);
+    } catch (error) {
+        console.error('Canvas clipping failed, using fallback approach:', error);
+        // Fallback: just ensure textures are visible
+        reorganizeTexturesForPDF(svgElement);
+    }
+}
+
+// Fallback approach: reorganize elements to show textures
+function reorganizeTexturesForPDF(svgElement) {
+    const groups = svgElement.querySelectorAll('g[id^="pattern-piece"], g.pattern-unit');
+    
+    groups.forEach(group => {
+        const textureImage = group.querySelector('.texture-image');
+        if (!textureImage) return;
+        
+        // Check if group is visible
+        const bbox = group.getBBox();
+        if (bbox.width <= 0 || bbox.height <= 0) {
+            return;
+        }
+        
+        // Ensure texture is below the paths
+        const firstPath = group.querySelector('.seam, .seam-allowance');
+        if (firstPath && textureImage.nextSibling !== firstPath) {
+            group.insertBefore(textureImage, firstPath);
+        }
+        
+    });
+}
+
+// Clip texture images to pattern shapes using Canvas API
+async function clipTexturesToPatternShapes(svgElement) {
+    const groups = svgElement.querySelectorAll('g[id^="pattern-piece"], g.pattern-unit');
+    if (groups.length > 0) {
+        console.log(`Processing ${groups.length} pattern piece groups for texture clipping`);
+    }
+    
+    for (const group of groups) {
+        const textureImage = group.querySelector('.texture-image');
+        if (!textureImage) continue;
+        
+        // Find the clipping path (seam-allowance or seam)
+        const clipPath = group.querySelector('.seam-allowance') || group.querySelector('.seam');
+        if (!clipPath) continue;
+        
+        try {
+            // Create clipped texture
+            const clippedImageUrl = await clipTextureToShape(textureImage, clipPath, group);
+            
+            // Replace the original image with clipped version
+            textureImage.setAttribute('href', clippedImageUrl);
+        } catch (error) {
+            console.error(`Failed to clip texture for ${group.id}:`, error);
+            throw error; // Re-throw to propagate the error
+        }
+    }
+}
+
+// Canvas-based texture clipping
+async function clipTextureToShape(textureImage, clipPath, group) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        
+        img.onload = () => {
+            try {
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Get dimensions
+                let bbox;
+                try {
+                    bbox = group.getBBox();
+                } catch (e) {
+                    console.warn(`Failed to get bounding box for ${group.id}:`, e);
+                    // Try to get bbox from the clip path instead
+                    bbox = clipPath.getBBox();
+                }
+                
+                const imgX = parseFloat(textureImage.getAttribute('x') || 0);
+                const imgY = parseFloat(textureImage.getAttribute('y') || 0);
+                const imgWidth = parseFloat(textureImage.getAttribute('width'));
+                const imgHeight = parseFloat(textureImage.getAttribute('height'));
+                
+                
+                // Check if bbox is valid
+                if (!bbox || bbox.width <= 0 || bbox.height <= 0) {
+                    console.warn(`Invalid bounding box for ${group.id}, using image dimensions`);
+                    // Use image dimensions as fallback
+                    canvas.width = Math.ceil(imgWidth || 100);
+                    canvas.height = Math.ceil(imgHeight || 100);
+                    bbox = { x: imgX, y: imgY, width: imgWidth, height: imgHeight };
+                } else {
+                    // Set canvas size to the group's bounding box
+                    canvas.width = Math.ceil(bbox.width);
+                    canvas.height = Math.ceil(bbox.height);
+                }
+                
+                // Final check for canvas size
+                if (canvas.width <= 0 || canvas.height <= 0) {
+                    throw new Error(`Invalid canvas size: ${canvas.width}x${canvas.height} for group ${group.id}`);
+                }
+                
+                
+                // Fill with white background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Translate to group's coordinate system
+                ctx.translate(-bbox.x, -bbox.y);
+                
+                // Create clipping path
+                const pathData = clipPath.getAttribute('d');
+                const path2D = new Path2D(pathData);
+                
+                // Apply transform if the path has one
+                const transform = clipPath.getAttribute('transform');
+                if (transform) {
+                    // Parse and apply transform (simplified - may need more complex parsing)
+                    const matrix = new DOMMatrix(transform);
+                    ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+                }
+                
+                // Set clipping path
+                ctx.save();
+                ctx.clip(path2D);
+                
+                // Draw the image at its position
+                ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+                
+                ctx.restore();
+                
+                // Convert to data URL
+                const dataUrl = canvas.toDataURL('image/png');
+                
+                // Validate data URL - a valid empty canvas will produce a short data URL
+                if (!dataUrl || !dataUrl.startsWith('data:image/png;base64,')) {
+                    throw new Error(`Invalid data URL generated: ${dataUrl}`);
+                }
+                
+                // Update image position to match canvas
+                textureImage.setAttribute('x', bbox.x);
+                textureImage.setAttribute('y', bbox.y);
+                textureImage.setAttribute('width', bbox.width);
+                textureImage.setAttribute('height', bbox.height);
+                
+                // Set both href and xlink:href for maximum compatibility
+                textureImage.setAttribute('href', dataUrl);
+                if (textureImage.hasAttributeNS('http://www.w3.org/1999/xlink', 'href')) {
+                    textureImage.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', dataUrl);
+                }
+                
+                
+                resolve(dataUrl);
+            } catch (error) {
+                reject(error);
+            }
+        };
+        
+        img.onerror = (e) => {
+            const src = textureImage.getAttribute('href') || textureImage.getAttribute('xlink:href');
+            reject(new Error(`Failed to load texture image: ${src?.substring(0, 50)}...`));
+        };
+        
+        // Load the image
+        const imageSrc = textureImage.getAttribute('href') || textureImage.getAttribute('xlink:href');
+        if (!imageSrc) {
+            reject(new Error('No image source found'));
+            return;
+        }
+        
+        // Handle cross-origin for data URLs
+        if (imageSrc.startsWith('data:')) {
+            img.src = imageSrc;
+        } else {
+            img.crossOrigin = 'anonymous';
+            img.src = imageSrc;
+        }
+    });
+}
+
 // Main PDF generation function
 export async function generatePDF(svgElement, settings) {
     console.log('Starting PDF generation with settings:', settings);
@@ -16,6 +226,9 @@ export async function generatePDF(svgElement, settings) {
     // The SVG is already scaled and has seam allowance applied from main.js
     // No need to scale again
     const scaledSVG = processedSVG;
+    
+    // Prepare SVG for PDF: clip textures and make seam paths transparent
+    await prepareSVGForPDF(scaledSVG);
     
     const originalViewBox = processedSVG.viewBox?.baseVal;
     console.log('SVG viewBox:', {
@@ -79,72 +292,10 @@ export async function generatePDF(svgElement, settings) {
     // Log the complete SVG structure being sent to PDF
     console.log('Complete SVG being sent to PDF (first 500 chars):', scaledSVG.outerHTML.substring(0, 500) + '...');
     
-    if (settings.splitPages) {
-        return await generateMultiPagePDF(scaledSVG, settings);
-    } else {
-        return await generateSinglePagePDF(scaledSVG, settings);
-    }
+    // Always use multi-page generation (even for single page)
+    return await generateMultiPagePDF(scaledSVG, settings);
 }
 
-// Generate single page PDF
-async function generateSinglePagePDF(svgElement, settings) {
-    console.log('Generating single page PDF');
-    const gridStrategy = getGridStrategy(settings);
-    
-    console.log('Grid strategy:', gridStrategy);
-    
-    // Create PDF document
-    const doc = new jsPDF({
-        orientation: settings.orientation,
-        unit: 'mm',
-        format: settings.paperSize
-    });
-    
-    console.log('PDF document created');
-    
-    // Use unit placement for single page as well
-    const placement = calculateUnitPlacement(svgElement, gridStrategy);
-    
-    if (placement.pages.length === 0 && placement.unplacedUnits.length === 0) {
-        throw new Error('パターンピースが検出されませんでした');
-    }
-    
-    if (placement.unplacedUnits.length > 0) {
-        console.warn(`${placement.unplacedUnits.length} units could not be placed on any page`);
-    }
-    
-    // Use unit placement even for single page
-    const page = placement.pages[0] || { units: [] };
-    const pagedSVG = createPlacedUnitsSVG(svgElement, page, gridStrategy);
-    
-    // Temporarily add SVG to DOM to ensure CSS styles are applied
-    pagedSVG.style.position = 'absolute';
-    pagedSVG.style.top = '-9999px';
-    pagedSVG.style.left = '-9999px';
-    document.body.appendChild(pagedSVG);
-    
-    try {
-        // Force style computation
-        window.getComputedStyle(pagedSVG).display;
-        
-        // Draw SVG to PDF
-        await svg2pdf(pagedSVG, doc, {
-            x: gridStrategy.margin,
-            y: gridStrategy.margin,
-            width: gridStrategy.printableWidth,
-            height: gridStrategy.printableHeight
-        });
-        
-        // Download PDF
-        doc.save('sewing-pattern.pdf');
-        
-    } finally {
-        // Remove temporary SVG from DOM
-        if (pagedSVG.parentNode) {
-            pagedSVG.parentNode.removeChild(pagedSVG);
-        }
-    }
-}
 
 // Generate multi-page PDF
 async function generateMultiPagePDF(svgElement, settings) {
@@ -182,6 +333,9 @@ async function generateMultiPagePDF(svgElement, settings) {
             
             // Create SVG for this page with placed units
             const pagedSVG = createPlacedUnitsSVG(svgElement, page, gridStrategy);
+            
+            // Prepare this page's SVG for PDF
+            await prepareSVGForPDF(pagedSVG);
             
             // Add alignment marks if requested
             if (settings.addMarks) {
