@@ -202,7 +202,6 @@ export class TextureMapper {
             const textureImage = piece.querySelector('.texture-image');
             if (textureImage) {
                 textureImage.removeAttribute('clip-path');
-                console.log(`Removed clip-path from piece ${pieceName}`);
             }
             
             // Update texture interactivity
@@ -225,7 +224,6 @@ export class TextureMapper {
                 if (textureImage) {
                     const clipId = `clip-${pieceId}`;
                     textureImage.setAttribute('clip-path', `url(#${clipId})`);
-                    console.log(`Re-applied clip-path to piece ${pieceId}`);
                 }
             }
             
@@ -405,7 +403,6 @@ export class TextureMapper {
             
             clipPath.appendChild(clonedPath);
             
-            console.log('Created clip path:', clipId, 'from', clippingPath.classList.toString(), 'with rotation:', -rotation);
         } else {
             console.warn('No clipping path found for piece:', piece);
         }
@@ -579,7 +576,6 @@ export class TextureMapper {
                     // Ensure clip-path is applied to texture image since piece is not selected after page switch
                     const clipId = `clip-${item.pieceId}`;
                     existingImage.setAttribute('clip-path', `url(#${clipId})`);
-                    console.log(`Applied clip-path to existing texture in piece ${item.pieceId}`);
                 } else {
                     // Temporarily select the piece
                     this.selectedPiece = piece;
@@ -759,12 +755,10 @@ export class TextureMapper {
             if (!clipPath) {
                 // Create clip path if it doesn't exist
                 this.createClipPath(piece, clipId);
-                console.log(`Created missing clip path for piece ${pieceId}`);
             }
             
             // Apply clipping to texture image
             image.setAttribute('clip-path', `url(#${clipId})`);
-            console.log(`Ensured clip-path for texture in piece ${pieceId}`);
         });
     }
     

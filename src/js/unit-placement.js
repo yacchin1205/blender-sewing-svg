@@ -3,12 +3,81 @@
 
 import { analyzeSVGUnits, getElementBoundingBox } from './svg-processor.js';
 
-// Analyze units including seam allowance paths
+// Get bounding box for pattern paths only (prioritizing seam-allowance over seam)
+function getPatternOnlyBoundingBox(group) {
+    // First, try to get seam-allowance paths (outer boundary with seam allowance)
+    let patternPaths = group.querySelectorAll('.seam-allowance');
+    
+    // If no seam-allowance paths, fall back to seam paths
+    if (patternPaths.length === 0) {
+        patternPaths = group.querySelectorAll('.seam');
+    }
+    
+    if (patternPaths.length === 0) {
+        return null;
+    }
+    
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    // Create temporary SVG to ensure elements are in DOM for getBBox
+    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    tempSvg.style.position = 'absolute';
+    tempSvg.style.visibility = 'hidden';
+    tempSvg.style.width = '0';
+    tempSvg.style.height = '0';
+    document.body.appendChild(tempSvg);
+    
+    patternPaths.forEach(path => {
+        const clonedPath = path.cloneNode(true);
+        tempSvg.appendChild(clonedPath);
+        
+        const bbox = clonedPath.getBBox();
+        minX = Math.min(minX, bbox.x);
+        minY = Math.min(minY, bbox.y);
+        maxX = Math.max(maxX, bbox.x + bbox.width);
+        maxY = Math.max(maxY, bbox.y + bbox.height);
+        
+        tempSvg.removeChild(clonedPath);
+    });
+    
+    // Clean up
+    document.body.removeChild(tempSvg);
+    
+    return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
+    };
+}
+
+// Analyze units for PDF placement (considering only pattern boundaries, not textures)
 function analyzeUnitsWithSeamAllowance(svgElement) {
     // First, check if the SVG has any seam-allowance paths at all
     const allSeamAllowancePaths = svgElement.querySelectorAll('path.seam-allowance');
     
-    const units = analyzeSVGUnits(svgElement);
+    // Get all pattern units
+    const groups = svgElement.querySelectorAll('g');
+    const units = [];
+    
+    groups.forEach((group, index) => {
+        // Skip groups that are children of other groups
+        if (group.parentElement.tagName === 'g') return;
+        
+        // Calculate bounding box based on pattern paths only
+        const bbox = getPatternOnlyBoundingBox(group);
+        if (bbox && bbox.width > 0 && bbox.height > 0) {
+            units.push({
+                index: index,
+                element: group,
+                className: group.getAttribute('class') || '',
+                id: group.getAttribute('id') || '',
+                boundingBox: bbox,
+                width: bbox.width,
+                height: bbox.height
+            });
+        }
+    });
     
     // If there are seam allowance paths, we need to recalculate all unit bounds
     if (allSeamAllowancePaths.length > 0) {

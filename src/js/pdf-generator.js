@@ -11,9 +11,6 @@ async function prepareSVGForPDF(svgElement) {
     textureImages.forEach(image => {
         image.removeAttribute('clip-path');
     });
-    if (textureImages.length > 0) {
-        console.log(`Removed clip-path from ${textureImages.length} texture images`);
-    }
     
     // Make all seam and seam-allowance paths transparent
     const seamPaths = svgElement.querySelectorAll('.seam, .seam-allowance');
@@ -26,18 +23,9 @@ async function prepareSVGForPDF(svgElement) {
             path.style.stroke = '#000';
         }
     });
-    if (seamPaths.length > 0) {
-        console.log(`Made ${seamPaths.length} seam paths transparent for PDF`);
-    }
     
-    // Try Canvas clipping approach
-    try {
-        await clipTexturesToPatternShapes(svgElement);
-    } catch (error) {
-        console.error('Canvas clipping failed, using fallback approach:', error);
-        // Fallback: just ensure textures are visible
-        reorganizeTexturesForPDF(svgElement);
-    }
+    // Apply Canvas clipping to textures
+    await clipTexturesToPatternShapes(svgElement);
 }
 
 // Fallback approach: reorganize elements to show textures
@@ -66,21 +54,36 @@ function reorganizeTexturesForPDF(svgElement) {
 // Clip texture images to pattern shapes using Canvas API
 async function clipTexturesToPatternShapes(svgElement) {
     const groups = svgElement.querySelectorAll('g[id^="pattern-piece"], g.pattern-unit');
-    if (groups.length > 0) {
-        console.log(`Processing ${groups.length} pattern piece groups for texture clipping`);
-    }
     
     for (const group of groups) {
         const textureImage = group.querySelector('.texture-image');
         if (!textureImage) continue;
         
-        // Find the clipping path (seam-allowance or seam)
-        const clipPath = group.querySelector('.seam-allowance') || group.querySelector('.seam');
-        if (!clipPath) continue;
+        // Find the actual clip path element from defs
+        const clipPathId = textureImage.getAttribute('clip-path');
+        let clipPathElement = null;
+        let actualPath = null;
+        
+        if (clipPathId) {
+            const match = clipPathId.match(/url\(#([^)]+)\)/);
+            if (match) {
+                clipPathElement = svgElement.querySelector(`#${match[1]}`);
+                if (clipPathElement) {
+                    actualPath = clipPathElement.querySelector('path');
+                }
+            }
+        }
+        
+        // Fallback to seam paths if no clip path found
+        if (!actualPath) {
+            actualPath = group.querySelector('.seam-allowance') || group.querySelector('.seam');
+        }
+        
+        if (!actualPath) continue;
         
         try {
             // Create clipped texture
-            const clippedImageUrl = await clipTextureToShape(textureImage, clipPath, group);
+            const clippedImageUrl = await clipTextureToShape(textureImage, actualPath, group);
             
             // Replace the original image with clipped version
             textureImage.setAttribute('href', clippedImageUrl);
@@ -89,6 +92,27 @@ async function clipTexturesToPatternShapes(svgElement) {
             throw error; // Re-throw to propagate the error
         }
     }
+}
+
+// Get bounding box from path data string
+function getPathBBoxFromData(pathData) {
+    if (!pathData) {
+        throw new Error('Invalid path data: empty or null');
+    }
+    
+    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    tempSvg.style.position = 'absolute';
+    tempSvg.style.visibility = 'hidden';
+    document.body.appendChild(tempSvg);
+    
+    const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    tempPath.setAttribute('d', pathData);
+    tempSvg.appendChild(tempPath);
+    
+    const bbox = tempPath.getBBox();
+    document.body.removeChild(tempSvg);
+    
+    return bbox;
 }
 
 // Canvas-based texture clipping
@@ -102,14 +126,25 @@ async function clipTextureToShape(textureImage, clipPath, group) {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // Get dimensions
+                // Get dimensions from the pattern shape (not the entire group)
                 let bbox;
+                
                 try {
-                    bbox = group.getBBox();
+                    // Get bbox from the pattern shape, not the entire group
+                    const patternPath = group.querySelector('.seam-allowance') || group.querySelector('.seam');
+                    if (patternPath && patternPath.getBBox) {
+                        bbox = patternPath.getBBox();
+                        
+                        // If bbox is empty, try alternate method
+                        if (bbox.width === 0 || bbox.height === 0) {
+                            bbox = getPathBBoxFromData(clipPath.getAttribute('d'));
+                        }
+                    } else {
+                        bbox = clipPath.getBBox();
+                    }
                 } catch (e) {
-                    console.warn(`Failed to get bounding box for ${group.id}:`, e);
-                    // Try to get bbox from the clip path instead
-                    bbox = clipPath.getBBox();
+                    console.error('Failed to get bounding box:', e);
+                    throw new Error(`Failed to calculate bounding box for texture clipping: ${e.message}`);
                 }
                 
                 const imgX = parseFloat(textureImage.getAttribute('x') || 0);
@@ -120,7 +155,6 @@ async function clipTextureToShape(textureImage, clipPath, group) {
                 
                 // Check if bbox is valid
                 if (!bbox || bbox.width <= 0 || bbox.height <= 0) {
-                    console.warn(`Invalid bounding box for ${group.id}, using image dimensions`);
                     // Use image dimensions as fallback
                     canvas.width = Math.ceil(imgWidth || 100);
                     canvas.height = Math.ceil(imgHeight || 100);
@@ -146,19 +180,45 @@ async function clipTextureToShape(textureImage, clipPath, group) {
                 
                 // Create clipping path
                 const pathData = clipPath.getAttribute('d');
-                const path2D = new Path2D(pathData);
                 
-                // Apply transform if the path has one
-                const transform = clipPath.getAttribute('transform');
-                if (transform) {
-                    // Parse and apply transform (simplified - may need more complex parsing)
-                    const matrix = new DOMMatrix(transform);
-                    ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+                // Check if the clip path has a transform (inverse rotation)
+                const clipTransform = clipPath.getAttribute('transform');
+                
+                ctx.save();
+                
+                // If clip path has transform, apply it before creating the path
+                if (clipTransform) {
+                    const rotateMatch = clipTransform.match(/rotate\(([^)]+)\)/);
+                    if (rotateMatch) {
+                        const [angle, cx, cy] = rotateMatch[1].split(/\s+/).map(Number);
+                        ctx.translate(cx, cy);
+                        ctx.rotate(angle * Math.PI / 180);
+                        ctx.translate(-cx, -cy);
+                    }
                 }
                 
-                // Set clipping path
-                ctx.save();
+                const path2D = new Path2D(pathData);
                 ctx.clip(path2D);
+                
+                // Reset transform for image drawing
+                if (clipTransform) {
+                    ctx.restore();
+                    ctx.save();
+                }
+                
+                // Apply image transform if present
+                const imgTransform = textureImage.getAttribute('transform');
+                if (imgTransform) {
+                    // Parse rotation from transform (e.g., "rotate(45 150 150)")
+                    const rotateMatch = imgTransform.match(/rotate\(([^)]+)\)/);
+                    if (rotateMatch) {
+                        const [angle, cx, cy] = rotateMatch[1].split(/\s+/).map(Number);
+                        // Apply rotation around the specified center
+                        ctx.translate(cx, cy);
+                        ctx.rotate(angle * Math.PI / 180);
+                        ctx.translate(-cx, -cy);
+                    }
+                }
                 
                 // Draw the image at its position
                 ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
@@ -178,6 +238,9 @@ async function clipTextureToShape(textureImage, clipPath, group) {
                 textureImage.setAttribute('y', bbox.y);
                 textureImage.setAttribute('width', bbox.width);
                 textureImage.setAttribute('height', bbox.height);
+                
+                // Remove transform since the image is now pre-rotated in the canvas
+                textureImage.removeAttribute('transform');
                 
                 // Set both href and xlink:href for maximum compatibility
                 textureImage.setAttribute('href', dataUrl);
@@ -216,9 +279,6 @@ async function clipTextureToShape(textureImage, clipPath, group) {
 
 // Main PDF generation function
 export async function generatePDF(svgElement, settings) {
-    console.log('Starting PDF generation with settings:', settings);
-    
-    console.log('Libraries loaded successfully');
     
     // Use the provided SVG which already has seam allowance applied from main.js
     let processedSVG = svgElement.cloneNode(true);
@@ -230,17 +290,6 @@ export async function generatePDF(svgElement, settings) {
     // Prepare SVG for PDF: clip textures and make seam paths transparent
     await prepareSVGForPDF(scaledSVG);
     
-    const originalViewBox = processedSVG.viewBox?.baseVal;
-    console.log('SVG viewBox:', {
-        x: originalViewBox?.x,
-        y: originalViewBox?.y, 
-        width: originalViewBox?.width,
-        height: originalViewBox?.height
-    });
-    console.log('SVG attributes:', {
-        width: processedSVG.getAttribute('width'),
-        height: processedSVG.getAttribute('height')
-    });
     
     // Adjust stroke-width for seam-allowance paths to be scale-independent
     const seamAllowancePaths = scaledSVG.querySelectorAll('path.seam-allowance');
@@ -249,48 +298,7 @@ export async function generatePDF(svgElement, settings) {
         path.setAttribute('stroke-width', '2');
     });
     
-    const scaledViewBox = scaledSVG.viewBox?.baseVal;
-    console.log('Scaled SVG viewBox:', {
-        x: scaledViewBox?.x,
-        y: scaledViewBox?.y,
-        width: scaledViewBox?.width, 
-        height: scaledViewBox?.height
-    });
-    console.log('Scaled SVG attributes:', {
-        width: scaledSVG.getAttribute('width'),
-        height: scaledSVG.getAttribute('height')
-    });
     
-    // Log path elements for debugging
-    const paths = scaledSVG.querySelectorAll('path');
-    const circles = scaledSVG.querySelectorAll('circle');
-    const transforms = scaledSVG.querySelectorAll('g[transform]');
-    
-    console.log('Number of paths found:', paths.length);
-    console.log('Number of circles found:', circles.length);
-    console.log('Number of transform groups:', transforms.length);
-    
-    if (transforms.length > 0) {
-        console.log('First transform:', transforms[0].getAttribute('transform'));
-    }
-    
-    if (paths.length > 0) {
-        console.log('First path sample:', paths[0].getAttribute('d').substring(0, 100) + '...');
-        console.log('First path class:', paths[0].getAttribute('class'));
-        console.log('First path stroke-width:', paths[0].style.strokeWidth || paths[0].getAttribute('stroke-width'));
-        console.log('First path stroke:', paths[0].style.stroke || paths[0].getAttribute('stroke'));
-        console.log('First path fill:', paths[0].style.fill || paths[0].getAttribute('fill'));
-    }
-    
-    if (circles.length > 0) {
-        console.log('First circle cx:', circles[0].getAttribute('cx'));
-        console.log('First circle cy:', circles[0].getAttribute('cy'));
-        console.log('First circle r:', circles[0].getAttribute('r'));
-        console.log('First circle fill:', circles[0].getAttribute('fill'));
-    }
-    
-    // Log the complete SVG structure being sent to PDF
-    console.log('Complete SVG being sent to PDF (first 500 chars):', scaledSVG.outerHTML.substring(0, 500) + '...');
     
     // Always use multi-page generation (even for single page)
     return await generateMultiPagePDF(scaledSVG, settings);
@@ -308,10 +316,21 @@ async function generateMultiPagePDF(svgElement, settings) {
         throw new Error('パターンピースが検出されませんでした');
     }
     
-    // Warn about unplaced units
+    // Check for unplaced units and throw error with detailed information
     if (placement.unplacedUnits.length > 0) {
-        console.warn(`${placement.unplacedUnits.length} units could not be placed on any page`);
-        // TODO: Show warning to user about unplaced units
+        const unplacedDetails = placement.unplacedUnits.map(unit => {
+            const id = unit.id || `パターンピース ${unit.index + 1}`;
+            return `- ${id}: ${unit.width.toFixed(1)}mm × ${unit.height.toFixed(1)}mm`;
+        }).join('\n');
+        
+        const pageSize = `${gridStrategy.printableWidth}mm × ${gridStrategy.printableHeight}mm`;
+        
+        throw new Error(
+            `PDF生成エラー: 型紙が用紙に配置できません\n\n` +
+            `問題の型紙:\n${unplacedDetails}\n` +
+            `用紙サイズ: ${pageSize}\n\n` +
+            `テクスチャ画像を含む型紙のサイズ計算で内部エラーが発生しました。`
+        );
     }
     
     // PDF文書を作成
