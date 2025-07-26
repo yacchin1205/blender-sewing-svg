@@ -142,6 +142,7 @@ describe('TextureMapper', () => {
             textureMapper.applyTexture('data:image/png;base64,test', 100, 100);
             
             const textureImage = piece.querySelector('.texture-image');
+            expect(textureImage).toBeDefined();
             expect(textureImage.hasAttribute('clip-path')).toBe(false);
         });
         
@@ -164,6 +165,7 @@ describe('TextureMapper', () => {
             textureMapper.deselectPiece();
             
             const textureImage = piece.querySelector('.texture-image');
+            expect(textureImage).toBeDefined();
             expect(textureImage.getAttribute('clip-path')).toBe('url(#clip-piece1)');
         });
         
@@ -178,6 +180,7 @@ describe('TextureMapper', () => {
             textureMapper.initialize(mockSVG);
             
             const textureImage = piece1.querySelector('.texture-image');
+            expect(textureImage).toBeDefined();
             expect(textureImage.getAttribute('clip-path')).toBe('url(#clip-piece1)');
         });
     });
@@ -246,7 +249,9 @@ describe('TextureMapper', () => {
             expect(textureData.transform.offsetX).toBe(10);
             expect(textureData.transform.offsetY).toBe(20);
             
+            // Check rotation on texture image
             const textureImage = piece.querySelector('.texture-image');
+            expect(textureImage).toBeDefined();
             expect(textureImage.getAttribute('transform')).toContain('rotate(45');
         });
     });

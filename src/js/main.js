@@ -146,6 +146,10 @@ function updatePreview() {
     // Initialize texture mapper if not already done
     if (!textureMapper) {
         textureMapper = new TextureMapper();
+        // Set sync callback to always update scaledSVG
+        textureMapper.syncCallback = (previewPiece) => {
+            syncTextureToScaledSVG(previewPiece);
+        };
     }
     
     // Initialize texture mapping for the current preview
@@ -336,11 +340,8 @@ async function handleTextureImageUpload(event) {
     reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-            // Apply texture to selected piece
+            // Apply texture to selected piece (will call syncCallback automatically)
             textureMapper.applyTexture(e.target.result, img.width, img.height);
-            
-            // Also apply to scaledSVG for persistence
-            syncTextureToScaledSVG(textureMapper.selectedPiece);
         };
         img.src = e.target.result;
     };
@@ -353,29 +354,16 @@ async function handleTextureImageUpload(event) {
 // Handle texture removal
 function handleRemoveTexture() {
     if (textureMapper && textureMapper.selectedPiece) {
-        const pieceId = textureMapper.selectedPiece.getAttribute('id');
+        // removeTexture will call syncCallback automatically
         textureMapper.removeTexture();
-        
-        // Also remove from scaledSVG
-        if (pieceId && scaledSVG) {
-            const sourcePiece = scaledSVG.querySelector(`#${pieceId}`);
-            if (sourcePiece) {
-                const sourceImage = sourcePiece.querySelector('.texture-image');
-                if (sourceImage) {
-                    sourceImage.remove();
-                }
-            }
-        }
     }
 }
 
 // Handle texture transform updates
 function handleTextureTransformUpdate() {
     if (textureMapper) {
+        // updateTextureTransform will call syncCallback automatically
         textureMapper.updateTextureTransform();
-        
-        // Also update in scaledSVG
-        syncTextureToScaledSVG(textureMapper.selectedPiece);
     }
 }
 
@@ -410,6 +398,12 @@ function syncTextureToScaledSVG(previewPiece) {
     if (previewImage) {
         const clonedImage = previewImage.cloneNode(true);
         sourcePiece.insertBefore(clonedImage, sourcePiece.firstChild);
+    } else {
+        // If no texture in preview, ensure it's removed from source too
+        const sourceImage = sourcePiece.querySelector('.texture-image');
+        if (sourceImage) {
+            sourceImage.remove();
+        }
     }
     
     // Also ensure clip path exists in scaledSVG

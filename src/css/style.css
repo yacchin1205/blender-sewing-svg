@@ -424,6 +424,7 @@ main {
 /* Texture image styles */
 .texture-image {
     pointer-events: none;
+    transition: opacity 0.2s;
 }
 
 .pattern-unit.selected .texture-image,
@@ -432,15 +433,65 @@ main {
     opacity: 0.7;
 }
 
+/* Texture dragging styles */
+.texture-image:hover {
+    opacity: 0.8;
+}
+
+.texture-image.dragging {
+    opacity: 0.5;
+    cursor: grabbing !important;
+}
+
+.texture-image.resizing {
+    opacity: 0.7;
+}
+
+.texture-image.rotating {
+    opacity: 0.7;
+}
+
+/* Manipulation handles */
+.texture-manipulation-handles {
+    pointer-events: none;
+}
+
+.texture-manipulation-handles .resize-handle,
+.texture-manipulation-handles .rotate-handle {
+    pointer-events: all;
+    transition: opacity 0.2s, fill 0.2s;
+}
+
+.texture-manipulation-handles .resize-handle:hover {
+    opacity: 0.8;
+    fill: #63b3ed;
+}
+
+.texture-manipulation-handles .rotate-handle:hover {
+    opacity: 0.8;
+    fill: #68d391;
+}
+
 /* Ensure seam paths are transparent but clickable */
 .seam {
     fill: transparent !important;
-    pointer-events: all !important;
+    pointer-events: all;
 }
 
 .seam-allowance {
     fill: transparent !important;
-    pointer-events: all !important;
+    pointer-events: all;
+}
+
+/* When pattern piece is selected, seam paths should not block texture interaction */
+.pattern-piece.selected .seam,
+.pattern-unit.selected .seam {
+    pointer-events: none;
+}
+
+.pattern-piece.selected .seam-allowance,
+.pattern-unit.selected .seam-allowance {
+    pointer-events: none;
 }
 
 /* フッター */
