@@ -28,28 +28,6 @@ async function prepareSVGForPDF(svgElement) {
     await clipTexturesToPatternShapes(svgElement);
 }
 
-// Fallback approach: reorganize elements to show textures
-function reorganizeTexturesForPDF(svgElement) {
-    const groups = svgElement.querySelectorAll('g[id^="pattern-piece"], g.pattern-unit');
-    
-    groups.forEach(group => {
-        const textureImage = group.querySelector('.texture-image');
-        if (!textureImage) return;
-        
-        // Check if group is visible
-        const bbox = group.getBBox();
-        if (bbox.width <= 0 || bbox.height <= 0) {
-            return;
-        }
-        
-        // Ensure texture is below the paths
-        const firstPath = group.querySelector('.seam, .seam-allowance');
-        if (firstPath && textureImage.nextSibling !== firstPath) {
-            group.insertBefore(textureImage, firstPath);
-        }
-        
-    });
-}
 
 // Clip texture images to pattern shapes using Canvas API
 async function clipTexturesToPatternShapes(svgElement) {
@@ -77,6 +55,9 @@ async function clipTexturesToPatternShapes(svgElement) {
         // Fallback to seam paths if no clip path found
         if (!actualPath) {
             actualPath = group.querySelector('.seam-allowance') || group.querySelector('.seam');
+            if (!actualPath) {
+                throw new Error(`No clipping path available for texture in group ${group.id}. Group must contain clip-path reference or seam/seam-allowance paths.`);
+            }
         }
         
         if (!actualPath) continue;
@@ -155,15 +136,12 @@ async function clipTextureToShape(textureImage, clipPath, group) {
                 
                 // Check if bbox is valid
                 if (!bbox || bbox.width <= 0 || bbox.height <= 0) {
-                    // Use image dimensions as fallback
-                    canvas.width = Math.ceil(imgWidth || 100);
-                    canvas.height = Math.ceil(imgHeight || 100);
-                    bbox = { x: imgX, y: imgY, width: imgWidth, height: imgHeight };
-                } else {
-                    // Set canvas size to the group's bounding box
-                    canvas.width = Math.ceil(bbox.width);
-                    canvas.height = Math.ceil(bbox.height);
+                    throw new Error(`Invalid bounding box for pattern shape in group ${group.id}: ${bbox?.width || 'undefined'}x${bbox?.height || 'undefined'}. This indicates corrupted pattern geometry.`);
                 }
+                
+                // Set canvas size to the group's bounding box
+                canvas.width = Math.ceil(bbox.width);
+                canvas.height = Math.ceil(bbox.height);
                 
                 // Final check for canvas size
                 if (canvas.width <= 0 || canvas.height <= 0) {
@@ -484,13 +462,10 @@ export function calculatePageInfo(svgElement, settings) {
     const width = viewBox.width;
     const height = viewBox.height;
     
-    let pageCount = 1;
-    if (settings.splitPages) {
-        const gridStrategy = getGridStrategy(settings);
-        // 既にスケール済みのSVGを使用
-        const placement = calculateUnitPlacement(svgElement, gridStrategy);
-        pageCount = placement.pages.length || 1;
-    }
+    const gridStrategy = getGridStrategy(settings);
+    // 既にスケール済みのSVGを使用
+    const placement = calculateUnitPlacement(svgElement, gridStrategy);
+    const pageCount = placement.pages.length || 1;
     
     return {
         width: width.toFixed(1),

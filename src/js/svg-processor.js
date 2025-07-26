@@ -1,3 +1,5 @@
+import { getGridStrategy } from './pdf-generator.js';
+
 // Load SVG file
 export async function loadSVGFile(file) {
     return new Promise((resolve, reject) => {
@@ -278,40 +280,6 @@ export function getElementBoundingBox(element) {
     }
 }
 
-// Calculate bounding box for a path's d attribute (kept for compatibility)
-function getPathBoundingBox(pathData) {
-    try {
-        // Create a temporary SVG to calculate bounding box
-        const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        tempPath.setAttribute('d', pathData);
-        tempSvg.appendChild(tempPath);
-        
-        // Temporarily add to DOM for measurement
-        tempSvg.style.position = 'absolute';
-        tempSvg.style.top = '-9999px';
-        tempSvg.style.left = '-9999px';
-        tempSvg.style.width = '1px';
-        tempSvg.style.height = '1px';
-        document.body.appendChild(tempSvg);
-        
-        const bbox = tempPath.getBBox();
-        const result = {
-            minX: bbox.x,
-            minY: bbox.y,
-            maxX: bbox.x + bbox.width,
-            maxY: bbox.y + bbox.height
-        };
-        
-        // Clean up
-        document.body.removeChild(tempSvg);
-        
-        return result;
-    } catch (error) {
-        console.warn('Failed to calculate bounding box for path:', error);
-        return null;
-    }
-}
 
 // Check if all units fit within page constraints
 export function checkUnitsPageConstraints(svgElement, settings) {
@@ -366,34 +334,6 @@ export function checkUnitsPageConstraints(svgElement, settings) {
     return result;
 }
 
-// Get grid strategy (moved from pdf-generator.js for reuse)
-function getGridStrategy(settings) {
-    const paperSizes = {
-        a4: { width: 210, height: 297 },
-        a3: { width: 297, height: 420 },
-        b4: { width: 257, height: 364 },
-        b5: { width: 182, height: 257 }
-    };
-    
-    const size = paperSizes[settings.paperSize] || paperSizes.a4;
-    const isLandscape = settings.orientation === 'landscape';
-    
-    const pageWidth = isLandscape ? size.height : size.width;
-    const pageHeight = isLandscape ? size.width : size.height;
-    const margin = 10;
-    const overlap = settings.overlap || 0;
-    
-    return {
-        pageWidth,
-        pageHeight,
-        margin,
-        overlap,
-        printableWidth: pageWidth - margin * 2,
-        printableHeight: pageHeight - margin * 2,
-        effectiveWidth: pageWidth - margin * 2 - overlap,
-        effectiveHeight: pageHeight - margin * 2 - overlap
-    };
-}
 
 // Calculate page layout
 export function calculatePageLayout(svgElement, gridStrategy) {

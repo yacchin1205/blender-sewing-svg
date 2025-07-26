@@ -118,7 +118,6 @@ export function calculateUnitPlacement(svgElement, gridStrategy) {
     const pages = [];
     
     if (units.length === 0) {
-        console.warn('No units found for placement');
         return { pages: [], unplacedUnits: [] };
     }
     
@@ -183,7 +182,6 @@ export function calculateUnitPlacement(svgElement, gridStrategy) {
                 placed = true;
             } else {
                 // Unit is too large for any page
-                console.warn(`Unit ${unit.index} (${unit.width}x${unit.height}mm) is too large for page`);
                 unplacedUnits.push(unit);
             }
         }

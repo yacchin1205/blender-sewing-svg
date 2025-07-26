@@ -169,7 +169,7 @@ function displayPreviewWithPlacement() {
         overlap: 0,
         addMarks: true,
         scaleFactor: parseFloat(elements.scaleFactor.value),
-        seamAllowance: parseFloat(elements.seamAllowance.value)
+        seamAllowance: parseFloat(elements.seamAllowance.value),
     };
     
     const gridStrategy = getGridStrategy(settings);
@@ -223,7 +223,7 @@ function updatePageDisplay() {
         overlap: 0,
         addMarks: true,
         scaleFactor: parseFloat(elements.scaleFactor.value),
-        seamAllowance: parseFloat(elements.seamAllowance.value)
+        seamAllowance: parseFloat(elements.seamAllowance.value),
     };
     
     const gridStrategy = getGridStrategy(settings);
@@ -261,7 +261,7 @@ function updatePageInfo() {
         overlap: 0,        // Fixed to 0 (no margin)
         addMarks: true,    // Fixed to true
         scaleFactor: parseFloat(elements.scaleFactor.value),
-        seamAllowance: parseFloat(elements.seamAllowance.value)
+        seamAllowance: parseFloat(elements.seamAllowance.value),
     };
     
     // Calculate page info - use scaledSVG which has seam allowance applied
@@ -309,11 +309,11 @@ async function handleGeneratePDF() {
         const settings = {
             paperSize: elements.paperSize.value,
             orientation: elements.orientation.value,
-                overlap: 0,        // Fixed to 0 (no margin)
+            overlap: 0,        // Fixed to 0 (no margin)
             addMarks: true,    // Fixed to true
             scaleFactor: parseFloat(elements.scaleFactor.value),
-            seamAllowance: parseFloat(elements.seamAllowance.value)
-        };
+            seamAllowance: parseFloat(elements.seamAllowance.value),
+            };
         
         // Generate PDF - use scaledSVG which already has seam allowance applied
         await generatePDF(scaledSVG, settings);
