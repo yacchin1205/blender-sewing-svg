@@ -4,12 +4,14 @@ import { calculateUnitPlacement, createPlacedUnitsSVG } from './unit-placement.j
 import { updateUI, showError, showProgress, showUnitWarning, hideUnitWarning } from './ui-controller.js';
 import { initializeI18n, t } from './i18n.js';
 import { applySeamAllowance } from './seam-allowance.js';
+import { TextureMapper } from './texture-mapping.js';
 
 // Global state
 let currentSVG = null;
 let scaledSVG = null;
 let currentPageIndex = 0;
 let currentPlacement = null;
+let textureMapper = null;
 
 // DOM element references
 const elements = {
@@ -35,7 +37,15 @@ const elements = {
     pageNavigation: document.getElementById('pageNavigation'),
     prevPageBtn: document.getElementById('prevPageBtn'),
     nextPageBtn: document.getElementById('nextPageBtn'),
-    pageIndicator: document.getElementById('pageIndicator')
+    pageIndicator: document.getElementById('pageIndicator'),
+    
+    // Texture mapping elements
+    textureImageInput: document.getElementById('textureImageInput'),
+    removeTextureBtn: document.getElementById('removeTextureBtn'),
+    textureScale: document.getElementById('textureScale'),
+    textureRotation: document.getElementById('textureRotation'),
+    textureOffsetX: document.getElementById('textureOffsetX'),
+    textureOffsetY: document.getElementById('textureOffsetY')
 };
 
 // Initialize the application
@@ -56,6 +66,14 @@ function setupEventListeners() {
     // Page navigation listeners
     elements.prevPageBtn.addEventListener('click', () => navigatePage(-1));
     elements.nextPageBtn.addEventListener('click', () => navigatePage(1));
+    
+    // Texture mapping listeners
+    elements.textureImageInput.addEventListener('change', handleTextureImageUpload);
+    elements.removeTextureBtn.addEventListener('click', handleRemoveTexture);
+    elements.textureScale.addEventListener('input', handleTextureTransformUpdate);
+    elements.textureRotation.addEventListener('input', handleTextureTransformUpdate);
+    elements.textureOffsetX.addEventListener('input', handleTextureTransformUpdate);
+    elements.textureOffsetY.addEventListener('input', handleTextureTransformUpdate);
 }
 
 // Handle file selection
@@ -68,6 +86,9 @@ async function handleFileSelect(file) {
     try {
         // Load SVG file
         currentSVG = await loadSVGFile(file);
+        
+        // Assign IDs to all pattern pieces (g elements) if they don't have one
+        assignPatternPieceIds(currentSVG);
         
         // Update UI
         updateUI.fileLoaded(elements, file.name);
@@ -121,6 +142,21 @@ function updatePreview() {
     
     // Update page information
     updatePageInfo();
+    
+    // Initialize texture mapper if not already done
+    if (!textureMapper) {
+        textureMapper = new TextureMapper();
+        // Set sync callback to always update scaledSVG
+        textureMapper.syncCallback = (previewPiece) => {
+            syncTextureToScaledSVG(previewPiece);
+        };
+    }
+    
+    // Initialize texture mapping for the current preview
+    const previewSvg = elements.svgPreview.querySelector('svg');
+    if (previewSvg) {
+        textureMapper.initialize(previewSvg);
+    }
 }
 
 // Display preview with placement
@@ -130,11 +166,10 @@ function displayPreviewWithPlacement() {
     const settings = {
         paperSize: elements.paperSize.value,
         orientation: elements.orientation.value,
-        splitPages: true,
         overlap: 0,
         addMarks: true,
         scaleFactor: parseFloat(elements.scaleFactor.value),
-        seamAllowance: parseFloat(elements.seamAllowance.value)
+        seamAllowance: parseFloat(elements.seamAllowance.value),
     };
     
     const gridStrategy = getGridStrategy(settings);
@@ -151,7 +186,19 @@ function displayPreviewWithPlacement() {
         elements.pageNavigation.style.display = 'none';
         elements.svgPreview.innerHTML = '';
         // For single page or no pages, just show the original scaled SVG
-        elements.svgPreview.appendChild(scaledSVG.cloneNode(true));
+        const previewSvg = scaledSVG.cloneNode(true);
+        elements.svgPreview.appendChild(previewSvg);
+        
+        // Re-initialize texture mapper for the new SVG
+        if (textureMapper) {
+            // Store texture data before re-initializing
+            const textureData = textureMapper.getTextureData();
+            textureMapper.initialize(previewSvg);
+            // Restore textures if any existed
+            if (textureData.length > 0) {
+                textureMapper.loadTextureData(textureData);
+            }
+        }
     }
 }
 
@@ -173,11 +220,10 @@ function updatePageDisplay() {
     const settings = {
         paperSize: elements.paperSize.value,
         orientation: elements.orientation.value,
-        splitPages: true,
         overlap: 0,
         addMarks: true,
         scaleFactor: parseFloat(elements.scaleFactor.value),
-        seamAllowance: parseFloat(elements.seamAllowance.value)
+        seamAllowance: parseFloat(elements.seamAllowance.value),
     };
     
     const gridStrategy = getGridStrategy(settings);
@@ -187,6 +233,17 @@ function updatePageDisplay() {
     elements.svgPreview.innerHTML = '';
     const previewSVG = createPlacedUnitsSVG(scaledSVG, currentPage, gridStrategy);
     elements.svgPreview.appendChild(previewSVG);
+    
+    // Re-initialize texture mapper for the new page
+    if (textureMapper) {
+        // Store texture data before re-initializing
+        const textureData = textureMapper.getTextureData();
+        textureMapper.initialize(previewSVG);
+        // Restore textures if any existed
+        if (textureData.length > 0) {
+            textureMapper.loadTextureData(textureData);
+        }
+    }
     
     // Update navigation controls
     elements.pageIndicator.textContent = `ページ ${currentPageIndex + 1} / ${currentPlacement.pages.length}`;
@@ -201,11 +258,10 @@ function updatePageInfo() {
     const settings = {
         paperSize: elements.paperSize.value,
         orientation: elements.orientation.value,
-        splitPages: true,  // Fixed to true
         overlap: 0,        // Fixed to 0 (no margin)
         addMarks: true,    // Fixed to true
         scaleFactor: parseFloat(elements.scaleFactor.value),
-        seamAllowance: parseFloat(elements.seamAllowance.value)
+        seamAllowance: parseFloat(elements.seamAllowance.value),
     };
     
     // Calculate page info - use scaledSVG which has seam allowance applied
@@ -217,7 +273,7 @@ function updatePageInfo() {
         `;
         
         // Add unit placement info if multiple pages
-        if (settings.splitPages && pageInfo.pageCount > 1) {
+        if (pageInfo.pageCount > 1) {
             const units = analyzeSVGUnits(scaledSVG);
             if (units.length > 0) {
                 infoHtml += `<br>${t('unitsLabel') || 'Pattern pieces:'} ${units.length}`;
@@ -253,12 +309,11 @@ async function handleGeneratePDF() {
         const settings = {
             paperSize: elements.paperSize.value,
             orientation: elements.orientation.value,
-            splitPages: true,  // Fixed to true
             overlap: 0,        // Fixed to 0 (no margin)
             addMarks: true,    // Fixed to true
             scaleFactor: parseFloat(elements.scaleFactor.value),
-            seamAllowance: parseFloat(elements.seamAllowance.value)
-        };
+            seamAllowance: parseFloat(elements.seamAllowance.value),
+            };
         
         // Generate PDF - use scaledSVG which already has seam allowance applied
         await generatePDF(scaledSVG, settings);
@@ -274,4 +329,115 @@ async function handleGeneratePDF() {
             elements.progressInfo.classList.remove('show');
         }, 3000);
     }
+}
+
+// Handle texture image upload
+async function handleTextureImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file || !textureMapper) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            // Apply texture to selected piece (will call syncCallback automatically)
+            textureMapper.applyTexture(e.target.result, img.width, img.height);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input so same file can be selected again
+    event.target.value = '';
+}
+
+// Handle texture removal
+function handleRemoveTexture() {
+    if (textureMapper && textureMapper.selectedPiece) {
+        // removeTexture will call syncCallback automatically
+        textureMapper.removeTexture();
+    }
+}
+
+// Handle texture transform updates
+function handleTextureTransformUpdate() {
+    if (textureMapper) {
+        // updateTextureTransform will call syncCallback automatically
+        textureMapper.updateTextureTransform();
+    }
+}
+
+// Sync texture from preview to scaledSVG
+function syncTextureToScaledSVG(previewPiece) {
+    if (!previewPiece) {
+        throw new Error('Preview piece is required');
+    }
+    if (!scaledSVG) {
+        throw new Error('Scaled SVG is not available');
+    }
+    
+    const pieceId = previewPiece.getAttribute('id');
+    if (!pieceId) {
+        throw new Error('Preview piece must have an ID');
+    }
+    
+    // Find corresponding piece in scaledSVG
+    const sourcePiece = scaledSVG.querySelector(`#${pieceId}`);
+    if (!sourcePiece) {
+        throw new Error(`Source piece with ID ${pieceId} not found in scaled SVG`);
+    }
+    
+    // Remove existing texture image
+    const existingImage = sourcePiece.querySelector('.texture-image');
+    if (existingImage) {
+        existingImage.remove();
+    }
+    
+    // Copy texture image from preview
+    const previewImage = previewPiece.querySelector('.texture-image');
+    if (previewImage) {
+        const clonedImage = previewImage.cloneNode(true);
+        sourcePiece.insertBefore(clonedImage, sourcePiece.firstChild);
+    } else {
+        // If no texture in preview, ensure it's removed from source too
+        const sourceImage = sourcePiece.querySelector('.texture-image');
+        if (sourceImage) {
+            sourceImage.remove();
+        }
+    }
+    
+    // Also ensure clip path exists in scaledSVG
+    const clipId = `clip-${pieceId}`;
+    let clipPath = scaledSVG.querySelector(`#${clipId}`);
+    if (!clipPath && previewImage) {
+        // Copy clip path from preview SVG
+        const previewClipPath = previewPiece.ownerDocument.querySelector(`#${clipId}`);
+        if (previewClipPath) {
+            let defs = scaledSVG.querySelector('defs');
+            if (!defs) {
+                defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                scaledSVG.insertBefore(defs, scaledSVG.firstChild);
+            }
+            defs.appendChild(previewClipPath.cloneNode(true));
+        }
+    }
+}
+
+// Assign IDs to pattern pieces
+function assignPatternPieceIds(svgElement) {
+    // Find all g elements that contain seam paths
+    const groups = svgElement.querySelectorAll('g');
+    let pieceIndex = 0;
+    
+    groups.forEach(group => {
+        // Check if this group contains a seam path
+        const seamPath = group.querySelector('.seam');
+        if (!seamPath) return;
+        
+        // If the group doesn't have an ID, assign one
+        if (!group.getAttribute('id')) {
+            pieceIndex++;
+            group.setAttribute('id', `pattern-piece-${pieceIndex}`);
+        }
+    });
 }

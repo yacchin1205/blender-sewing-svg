@@ -327,6 +327,173 @@ main {
     font-weight: 500;
 }
 
+/* Texture mapping styles */
+.texture-settings {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f7fafc;
+    border-radius: 4px;
+}
+
+.texture-settings h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #2d3748;
+}
+
+.texture-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.texture-info #selectedPieceName {
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.upload-button {
+    display: inline-block;
+    padding: 6px 16px;
+    background-color: #4299e1;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.upload-button:hover {
+    background-color: #3182ce;
+}
+
+.texture-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.texture-controls .input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.texture-controls .input-group label {
+    min-width: 60px;
+}
+
+.texture-controls input[type="number"] {
+    width: 80px;
+}
+
+/* Pattern piece hover/selection */
+.pattern-unit,
+.pattern-piece {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.pattern-unit:hover,
+.pattern-piece:hover {
+    opacity: 0.8;
+}
+
+.pattern-unit.selected,
+.pattern-piece.selected {
+    filter: drop-shadow(0 0 5px #4299e1);
+}
+
+/* Seam path hover effect */
+.seam,
+.seam-allowance {
+    cursor: pointer;
+    transition: stroke 0.2s;
+}
+
+/* Hover state applied via JavaScript */
+.pattern-piece.hover .seam,
+.pattern-piece.hover .seam-allowance,
+.pattern-unit.hover .seam,
+.pattern-unit.hover .seam-allowance {
+    stroke: #4299e1;
+}
+
+/* Texture image styles */
+.texture-image {
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.pattern-unit.selected .texture-image,
+.pattern-piece.selected .texture-image {
+    pointer-events: all;
+    opacity: 0.7;
+}
+
+/* Texture dragging styles */
+.texture-image:hover {
+    opacity: 0.8;
+}
+
+.texture-image.dragging {
+    opacity: 0.5;
+    cursor: grabbing !important;
+}
+
+.texture-image.resizing {
+    opacity: 0.7;
+}
+
+.texture-image.rotating {
+    opacity: 0.7;
+}
+
+/* Manipulation handles */
+.texture-manipulation-handles {
+    pointer-events: none;
+}
+
+.texture-manipulation-handles .resize-handle,
+.texture-manipulation-handles .rotate-handle {
+    pointer-events: all;
+    transition: opacity 0.2s, fill 0.2s;
+}
+
+.texture-manipulation-handles .resize-handle:hover {
+    opacity: 0.8;
+    fill: #63b3ed;
+}
+
+.texture-manipulation-handles .rotate-handle:hover {
+    opacity: 0.8;
+    fill: #68d391;
+}
+
+/* Ensure seam paths are transparent but clickable */
+.seam {
+    fill: transparent !important;
+    pointer-events: all;
+}
+
+.seam-allowance {
+    fill: transparent !important;
+    pointer-events: all;
+}
+
+/* When pattern piece is selected, seam paths should not block texture interaction */
+.pattern-piece.selected .seam,
+.pattern-unit.selected .seam {
+    pointer-events: none;
+}
+
+.pattern-piece.selected .seam-allowance,
+.pattern-unit.selected .seam-allowance {
+    pointer-events: none;
+}
+
 /* フッター */
 footer {
     text-align: center;

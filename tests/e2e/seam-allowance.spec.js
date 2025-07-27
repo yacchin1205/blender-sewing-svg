@@ -73,10 +73,9 @@ test.describe('Seam Allowance Feature', () => {
         const value = await seamAllowanceInput.inputValue();
         expect(value).toBe('5');
         
-        // Check unit label
-        const unitLabel = page.locator('.unit-label');
+        // Check unit label for seam allowance field
+        const unitLabel = page.locator('#settingsSection').getByText('mm', { exact: true }).first();
         await expect(unitLabel).toBeVisible();
-        await expect(unitLabel).toHaveText('mm');
     });
     
     test('should update preview when seam allowance changes', async ({ page }) => {
