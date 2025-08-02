@@ -106,7 +106,8 @@ async function handleFileSelect(file) {
 function updatePreview() {
     if (!currentSVG) return;
     
-    const scaleFactor = parseFloat(elements.scaleFactor.value);
+    const scalePercentage = parseFloat(elements.scaleFactor.value);
+    const scaleFactor = scalePercentage / 100; // Convert percentage to scale factor
     const seamAllowance = parseFloat(elements.seamAllowance.value);
     
     // Clone SVG and apply transformations
@@ -168,7 +169,7 @@ function displayPreviewWithPlacement() {
         orientation: elements.orientation.value,
         overlap: 0,
         addMarks: true,
-        scaleFactor: parseFloat(elements.scaleFactor.value),
+        scaleFactor: parseFloat(elements.scaleFactor.value) / 100,
         seamAllowance: parseFloat(elements.seamAllowance.value),
     };
     
@@ -222,7 +223,7 @@ function updatePageDisplay() {
         orientation: elements.orientation.value,
         overlap: 0,
         addMarks: true,
-        scaleFactor: parseFloat(elements.scaleFactor.value),
+        scaleFactor: parseFloat(elements.scaleFactor.value) / 100,
         seamAllowance: parseFloat(elements.seamAllowance.value),
     };
     
@@ -260,7 +261,7 @@ function updatePageInfo() {
         orientation: elements.orientation.value,
         overlap: 0,        // Fixed to 0 (no margin)
         addMarks: true,    // Fixed to true
-        scaleFactor: parseFloat(elements.scaleFactor.value),
+        scaleFactor: parseFloat(elements.scaleFactor.value) / 100,
         seamAllowance: parseFloat(elements.seamAllowance.value),
     };
     
@@ -311,7 +312,7 @@ async function handleGeneratePDF() {
             orientation: elements.orientation.value,
             overlap: 0,        // Fixed to 0 (no margin)
             addMarks: true,    // Fixed to true
-            scaleFactor: parseFloat(elements.scaleFactor.value),
+            scaleFactor: parseFloat(elements.scaleFactor.value) / 100,
             seamAllowance: parseFloat(elements.seamAllowance.value),
             };
         

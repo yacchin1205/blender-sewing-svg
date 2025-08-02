@@ -60,8 +60,8 @@ test.describe('Seam Allowance with Unit Placement', () => {
         // Set seam allowance to 10mm
         await page.fill('#seamAllowance', '10');
         
-        // Set scale to 1 (no scaling) for easier calculation
-        await page.fill('#scaleFactor', '1');
+        // Set scale to 100% (no scaling) for easier calculation
+        await page.fill('#scaleFactor', '100');
         
         // Trigger preview update
         await page.locator('#scaleFactor').press('Enter');

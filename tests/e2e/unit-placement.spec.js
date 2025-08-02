@@ -22,8 +22,8 @@ test.describe('Unit Placement for Multi-page PDF', () => {
       // Wait for file to be loaded
       await page.waitForSelector('.file-info', { state: 'visible' });
       
-      // Set scale factor to 1 (no scaling)
-      await page.fill('#scaleFactor', '1');
+      // Set scale factor to 100% (no scaling)
+      await page.fill('#scaleFactor', '100');
       
       // Set paper size to A4
       await page.selectOption('#paperSize', 'a4');

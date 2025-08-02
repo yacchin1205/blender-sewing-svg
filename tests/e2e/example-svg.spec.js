@@ -24,8 +24,8 @@ test.describe('Example.svg Seam Allowance', () => {
             // Set seam allowance to 0 (no seam allowance)
             await page.fill('#seamAllowance', '0');
             
-            // Set scale to 0.0001 (very small scale for large example.svg)
-            await page.fill('#scaleFactor', '0.0001');
+            // Set scale to 0.01% (very small scale for large example.svg)
+            await page.fill('#scaleFactor', '0.01');
             
             // Trigger change event to ensure preview updates
             await page.locator('#scaleFactor').press('Enter');
@@ -77,8 +77,8 @@ test.describe('Example.svg Seam Allowance', () => {
         const seamAllowanceInput = page.locator('#seamAllowance');
         await expect(seamAllowanceInput).toHaveValue('5');
         
-        // Set scale to 0.001 (typical for example.svg)
-        await page.fill('#scaleFactor', '0.001');
+        // Set scale to 0.1% (typical for example.svg)
+        await page.fill('#scaleFactor', '0.1');
         
         // Wait for preview update
         await page.waitForTimeout(1000);
@@ -109,7 +109,7 @@ test.describe('Example.svg Seam Allowance', () => {
         await page.waitForSelector('.file-info', { state: 'visible' });
         
         // Test with larger scale (less reduction)
-        await page.fill('#scaleFactor', '0.01');
+        await page.fill('#scaleFactor', '1');
         
         // Set seam allowance
         await page.fill('#seamAllowance', '5');
@@ -122,7 +122,7 @@ test.describe('Example.svg Seam Allowance', () => {
         expect(previewHTML).toContain('seam-allowance');
         
         // Test with very small scale
-        await page.fill('#scaleFactor', '0.0001');
+        await page.fill('#scaleFactor', '0.01');
         await page.waitForTimeout(1000);
         
         // With very small scale, seam allowance might be extremely large relative to pattern
