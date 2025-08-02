@@ -24,8 +24,8 @@ test.describe('Seam Allowance Feature', () => {
             // Set seam allowance to 10mm
             await page.fill('#seamAllowance', '10');
             
-            // Set scale to 1 (no scaling)
-            await page.fill('#scaleFactor', '1');
+            // Set scale to 100% (no scaling)
+            await page.fill('#scaleFactor', '100');
             
             // Generate PDF
             const downloadPromise = page.waitForEvent('download');
@@ -182,7 +182,7 @@ test.describe('Seam Allowance Feature', () => {
             await page.fill('#seamAllowance', '7');
             
             // Set scale factor
-            await page.fill('#scaleFactor', '0.5');
+            await page.fill('#scaleFactor', '50');
             
             // Generate PDF
             const downloadPromise = page.waitForEvent('download');

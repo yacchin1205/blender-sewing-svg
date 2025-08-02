@@ -13,7 +13,7 @@ const translations = {
         // Settings
         settingsTitle: 'Settings',
         scaleCorrection: 'Scale Correction',
-        scaleFactor: 'Scale factor:',
+        scaleFactor: 'Scaling:',
         seamAllowanceSettings: 'Seam Allowance',
         seamAllowance: 'Seam allowance width:',
         seamAllowanceUnit: 'mm',
@@ -60,7 +60,7 @@ const translations = {
         unitExceedsBoth: 'Width and height exceed page limits',
         unitSizeFormat: 'Unit size: {width}mm × {height}mm',
         pageSizeFormat: 'Max page size: {width}mm × {height}mm',
-        unitSuggestion: 'Try using a larger paper size (A3 instead of A4) or reduce the scale factor to make the units smaller.',
+        unitSuggestion: 'Try using a larger paper size (A3 instead of A4) or reduce the scaling to make the units smaller.',
         
         // Seam allowance errors
         seamAllowanceError: 'Seam allowance error ({pathId}): {error}',
@@ -83,7 +83,7 @@ const translations = {
         // Settings
         settingsTitle: '設定',
         scaleCorrection: 'スケール補正',
-        scaleFactor: 'スケール係数:',
+        scaleFactor: '拡大率:',
         seamAllowanceSettings: '縫いしろ設定',
         seamAllowance: '縫いしろ幅:',
         seamAllowanceUnit: 'mm',
@@ -130,7 +130,7 @@ const translations = {
         unitExceedsBoth: '幅と高さがページ制限を超過',
         unitSizeFormat: 'ユニットサイズ: {width}mm × {height}mm',
         pageSizeFormat: '最大ページサイズ: {width}mm × {height}mm',
-        unitSuggestion: 'より大きな用紙サイズ（A4からA3など）を使用するか、スケール係数を小さくしてユニットを縮小してください。',
+        unitSuggestion: 'より大きな用紙サイズ（A4からA3など）を使用するか、拡大率を小さくしてユニットを縮小してください。',
         
         // Seam allowance errors
         seamAllowanceError: '縫いしろ作成エラー ({pathId}): {error}',

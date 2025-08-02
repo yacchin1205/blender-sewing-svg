@@ -126,7 +126,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
   //   await expect(page.locator('.file-info')).toBeVisible();
     
   //   // Change scale factor
-  //   await page.fill('#scaleFactor', '0.01');
+  //   await page.fill('#scaleFactor', '1');
     
   //   // Change paper size
   //   await page.selectOption('#paperSize', 'a3');
@@ -496,8 +496,8 @@ test.describe('Sewing SVG to PDF Converter', () => {
     // Wait for file to load
     await expect(page.locator('.file-info')).toBeVisible();
     
-    // Set scale factor to 0.001 (1/1000) - Blender plugin correction
-    await page.fill('#scaleFactor', '0.001');
+    // Set scale factor to 0.1% (1/1000) - Blender plugin correction
+    await page.fill('#scaleFactor', '0.1');
     await page.dispatchEvent('#scaleFactor', 'change');
     await page.waitForTimeout(1000);
     
@@ -754,8 +754,8 @@ test.describe('Sewing SVG to PDF Converter', () => {
     // Wait for file to load
     await expect(page.locator('.file-info')).toBeVisible();
     
-    // Test scale factor 0.1 (1000mm → 100mm)
-    await page.fill('#scaleFactor', '0.1');
+    // Test scale factor 10% (1000mm → 100mm)
+    await page.fill('#scaleFactor', '10');
     await page.dispatchEvent('#scaleFactor', 'change');
     
     // Note: splitPages is now fixed to true
@@ -772,7 +772,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
     expect(pageInfoText).toMatch(/1 (ページ|pages?)/); // Should be 1 page, not 24
     
     // Test scale factor 0.01 (1000mm → 10mm) 
-    await page.fill('#scaleFactor', '0.01');
+    await page.fill('#scaleFactor', '1');
     // Trigger change event to ensure update
     await page.dispatchEvent('#scaleFactor', 'change');
     await page.waitForTimeout(1000);
@@ -784,8 +784,8 @@ test.describe('Sewing SVG to PDF Converter', () => {
     expect(pageInfoText2).toContain('10.0mm × 10.0mm');
     expect(pageInfoText2).toMatch(/1 (ページ|pages?)/);
     
-    // Test scale factor 0.001 (1000mm → 1mm)
-    await page.fill('#scaleFactor', '0.001');
+    // Test scale factor 0.1% (1000mm → 1mm)
+    await page.fill('#scaleFactor', '0.1');
     await page.dispatchEvent('#scaleFactor', 'change');
     await page.waitForTimeout(1000);
     
@@ -796,8 +796,8 @@ test.describe('Sewing SVG to PDF Converter', () => {
     expect(pageInfoText3).toContain('1.0mm × 1.0mm');
     expect(pageInfoText3).toMatch(/1 (ページ|pages?)/);
     
-    // Test with split pages enabled for scale 0.1
-    await page.fill('#scaleFactor', '0.1');
+    // Test with split pages enabled for scale 10%
+    await page.fill('#scaleFactor', '10');
     await page.dispatchEvent('#scaleFactor', 'change');
     // splitPages is now fixed to true
     await page.waitForTimeout(1000);
@@ -840,7 +840,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
     await expect(page.locator('.file-info')).toBeVisible();
     
     // Set scale factor to 0.9 (500mm -> 450mm, oversized unit will be 270x180mm)
-    await page.fill('#scaleFactor', '0.9');
+    await page.fill('#scaleFactor', '90');
     await page.dispatchEvent('#scaleFactor', 'change');
     await page.waitForTimeout(1000);
     
@@ -892,8 +892,8 @@ test.describe('Sewing SVG to PDF Converter', () => {
     // Wait for file to load
     await expect(page.locator('.file-info')).toBeVisible();
     
-    // Set scale factor to 0.001
-    await page.fill('#scaleFactor', '0.001');
+    // Set scale factor to 0.1%
+    await page.fill('#scaleFactor', '0.1');
     await page.dispatchEvent('#scaleFactor', 'change');
     await page.waitForTimeout(1000);
     
@@ -930,7 +930,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
     await expect(page.locator('.file-info')).toBeVisible();
     
     // Set scale factor to 0.9 (250mm -> 225mm, 350mm -> 315mm, unit ~207x297mm)
-    await page.fill('#scaleFactor', '0.9');
+    await page.fill('#scaleFactor', '90');
     await page.dispatchEvent('#scaleFactor', 'change');
     
     // Start with A4 (should show warning)
@@ -990,8 +990,8 @@ test.describe('Sewing SVG to PDF Converter', () => {
       // Wait for file to load
       await expect(page.locator('.file-info')).toBeVisible();
       
-      // Set scale factor to 0.1 (100mm -> 10mm, circles will be 0.4-0.5mm)
-      await page.fill('#scaleFactor', '0.1');
+      // Set scale factor to 10% (100mm -> 10mm, circles will be 0.4-0.5mm)
+      await page.fill('#scaleFactor', '10');
       await page.dispatchEvent('#scaleFactor', 'change');
       await page.waitForTimeout(1000);
       
