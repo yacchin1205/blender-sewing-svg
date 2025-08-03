@@ -137,7 +137,7 @@ test.describe('Unit Placement for Multi-page PDF', () => {
       
       // Create an SVG with oversized units
       const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000mm" height="1000mm">
-        <g class="pattern-unit">
+        <g>
           <rect x="0" y="0" width="300" height="400" fill="blue"/>
         </g>
       </svg>`;

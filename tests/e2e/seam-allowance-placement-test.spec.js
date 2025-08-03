@@ -15,7 +15,7 @@ test.describe('Seam Allowance Placement Test', () => {
         // Create SVG with a 50x50 unit that will have 10mm seam allowance
         const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200mm" height="100mm">
-            <g class="pattern-unit" id="unit1">
+            <g id="unit1">
                 <path class="seam" d="M10,10 L60,10 L60,60 L10,60 Z" stroke="black" fill="none"/>
             </g>
         </svg>

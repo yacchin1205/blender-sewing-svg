@@ -25,22 +25,22 @@ test.describe('Seam Allowance with Unit Placement', () => {
                     </style>
                 </defs>
                 <!-- First unit: 60x60 square at (20,20) -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 20,20 L 80,20 L 80,80 L 20,80 Z"/>
                     <text x="50" y="50" text-anchor="middle" font-size="8">Unit 1</text>
                 </g>
                 <!-- Second unit: 60x60 square at (120,20) - 40mm gap without seam allowance -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 120,20 L 180,20 L 180,80 L 120,80 Z"/>
                     <text x="150" y="50" text-anchor="middle" font-size="8">Unit 2</text>
                 </g>
                 <!-- Third unit: 60x60 square at (20,120) -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 20,120 L 80,120 L 80,180 L 20,180 Z"/>
                     <text x="50" y="150" text-anchor="middle" font-size="8">Unit 3</text>
                 </g>
                 <!-- Fourth unit: 60x60 square at (120,120) -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 120,120 L 180,120 L 180,180 L 120,180 Z"/>
                     <text x="150" y="150" text-anchor="middle" font-size="8">Unit 4</text>
                 </g>
@@ -93,7 +93,7 @@ test.describe('Seam Allowance with Unit Placement', () => {
         
         // Extract unit positions from the preview
         // Units might be in separate SVG elements or transformed groups
-        const unitElements = await page.locator('.pattern-unit').all();
+        const unitElements = await page.locator('g[data-pattern-symbol]').all();
         console.log('Number of unit elements found:', unitElements.length);
         
         // Check page count - with seam allowance, units should need 2 pages
@@ -130,12 +130,12 @@ test.describe('Seam Allowance with Unit Placement', () => {
                     </style>
                 </defs>
                 <!-- First unit: 120x120 -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 40,10 L 160,10 L 160,130 L 40,130 Z"/>
                     <text x="100" y="70" text-anchor="middle" font-size="12">Unit 1</text>
                 </g>
                 <!-- Second unit: 120x120 positioned below with small gap -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 40,135 L 160,135 L 160,255 L 40,255 Z"/>
                     <text x="100" y="195" text-anchor="middle" font-size="12">Unit 2</text>
                 </g>
@@ -192,22 +192,22 @@ test.describe('Seam Allowance with Unit Placement', () => {
                     </style>
                 </defs>
                 <!-- First unit: 60x60 square at (20,20) -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 20,20 L 80,20 L 80,80 L 20,80 Z"/>
                     <text x="50" y="50" text-anchor="middle" font-size="8">Unit 1</text>
                 </g>
                 <!-- Second unit: 60x60 square at (120,20) -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 120,20 L 180,20 L 180,80 L 120,80 Z"/>
                     <text x="150" y="50" text-anchor="middle" font-size="8">Unit 2</text>
                 </g>
                 <!-- Third unit: 60x60 square at (20,120) -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 20,120 L 80,120 L 80,180 L 20,180 Z"/>
                     <text x="50" y="150" text-anchor="middle" font-size="8">Unit 3</text>
                 </g>
                 <!-- Fourth unit: 60x60 square at (120,120) -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 120,120 L 180,120 L 180,180 L 120,180 Z"/>
                     <text x="150" y="150" text-anchor="middle" font-size="8">Unit 4</text>
                 </g>

@@ -18,12 +18,12 @@ test.describe('Seam Allowance Unit Overlap Detection', () => {
                     </style>
                 </defs>
                 <!-- First unit: 90x90 square at (5,5) -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 5,5 L 95,5 L 95,95 L 5,95 Z"/>
                     <text x="50" y="50" text-anchor="middle" font-size="8">Unit 1</text>
                 </g>
                 <!-- Second unit: 90x90 square at (95,5) - exactly adjacent, no gap -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 95,5 L 185,5 L 185,95 L 95,95 Z"/>
                     <text x="140" y="50" text-anchor="middle" font-size="8">Unit 2</text>
                 </g>
@@ -99,11 +99,11 @@ test.describe('Seam Allowance Unit Overlap Detection', () => {
                     </style>
                 </defs>
                 <!-- Two 180x180 units side by side with 20mm gap -->
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 10,10 L 190,10 L 190,190 L 10,190 Z"/>
                     <text x="100" y="100" text-anchor="middle" font-size="12">Large Unit 1</text>
                 </g>
-                <g class="pattern-unit">
+                <g>
                     <path class="seam" d="M 210,10 L 390,10 L 390,190 L 210,190 Z"/>
                     <text x="300" y="100" text-anchor="middle" font-size="12">Large Unit 2</text>
                 </g>
