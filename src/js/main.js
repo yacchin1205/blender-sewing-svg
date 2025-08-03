@@ -6,6 +6,7 @@ import { initializeI18n, t } from './i18n.js';
 import { applySeamAllowance } from './seam-allowance.js';
 import { TextureMapper } from './texture-mapping.js';
 import { assignPatternPieceSymbols, updateAllSymbols, removeAllSymbols } from './pattern-symbols.js';
+import { assignSewingguideLabels, updateAllSewingguideLabels } from './sewingguide-labels.js';
 
 // Global state
 let currentSVG = null;
@@ -94,6 +95,9 @@ async function handleFileSelect(file) {
         // Assign symbols to pattern pieces
         assignPatternPieceSymbols(currentSVG);
         
+        // Assign labels to sewingguide pairs
+        assignSewingguideLabels(currentSVG);
+        
         // Update UI
         updateUI.fileLoaded(elements, file.name);
         
@@ -164,6 +168,9 @@ function updatePreview() {
         
         // Add symbols to all pattern pieces
         updateAllSymbols(previewSvg);
+        
+        // Add labels to sewingguide pairs
+        updateAllSewingguideLabels(previewSvg);
     }
 }
 
@@ -255,6 +262,9 @@ function updatePageDisplay() {
     
     // Add symbols to pattern pieces
     updateAllSymbols(previewSVG);
+    
+    // Add labels to sewingguide pairs
+    updateAllSewingguideLabels(previewSVG);
     
     // Update navigation controls
     elements.pageIndicator.textContent = `ページ ${currentPageIndex + 1} / ${currentPlacement.pages.length}`;
