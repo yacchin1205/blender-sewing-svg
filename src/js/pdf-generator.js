@@ -1,6 +1,7 @@
 import { scaleSVG } from './svg-processor.js';
 import { calculateUnitPlacement, createPlacedUnitsSVG } from './unit-placement.js';
 import { applySeamAllowance } from './seam-allowance.js';
+import { updateAllSymbols } from './pattern-symbols.js';
 import { jsPDF } from 'jspdf';
 import { svg2pdf } from 'svg2pdf.js';
 
@@ -344,6 +345,9 @@ async function generateMultiPagePDF(svgElement, settings) {
             pagedSVG.style.top = '-9999px';
             pagedSVG.style.left = '-9999px';
             document.body.appendChild(pagedSVG);
+            
+            // Add symbols to pattern pieces after DOM insertion
+            updateAllSymbols(pagedSVG);
             
             try {
                 // Force style computation
