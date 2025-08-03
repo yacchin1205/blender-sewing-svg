@@ -2,6 +2,7 @@ import { scaleSVG } from './svg-processor.js';
 import { calculateUnitPlacement, createPlacedUnitsSVG } from './unit-placement.js';
 import { applySeamAllowance } from './seam-allowance.js';
 import { updateAllSymbols } from './pattern-symbols.js';
+import { updateAllSewingguideLabels } from './sewingguide-labels.js';
 import { jsPDF } from 'jspdf';
 import { svg2pdf } from 'svg2pdf.js';
 
@@ -348,6 +349,9 @@ async function generateMultiPagePDF(svgElement, settings) {
             
             // Add symbols to pattern pieces after DOM insertion
             updateAllSymbols(pagedSVG);
+            
+            // Add labels to sewingguide pairs
+            updateAllSewingguideLabels(pagedSVG);
             
             try {
                 // Force style computation

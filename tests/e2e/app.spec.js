@@ -470,7 +470,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
     // Upload large SVG that needs scaling (simulating Blender plugin output)
     const scalingTestSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000mm" height="1000mm">
       <defs><style>.seam{stroke: #000; stroke-width:2px; fill:none} .guide{stroke:#888; stroke-width:1px; fill:none; stroke-dasharray:5,5}</style></defs>
-      <g class="pattern-unit">
+      <g>
         <!-- Main pattern rectangle (1000x larger than intended) -->
         <path class="seam" d="M 100,100 L 900,100 L 900,900 L 100,900 Z"/>
         <!-- Corner markers for scaling verification -->
@@ -968,7 +968,7 @@ test.describe('Sewing SVG to PDF Converter', () => {
       // Upload SVG with scaling that allows color verification (0.1 scale factor)
       const colorTestSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100mm" height="100mm">
       <defs><style>.seam{stroke: #000; stroke-width:2px; fill:none}</style></defs>
-      <g class="pattern-unit">
+      <g>
         <!-- Main rectangle -->
         <path class="seam" d="M 10,10 L 90,10 L 90,90 L 10,90 Z"/>
         <!-- Large colored markers for verification (will be 0.5-4mm after scaling) -->
