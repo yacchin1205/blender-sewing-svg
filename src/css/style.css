@@ -522,3 +522,9 @@ footer {
         margin-left: 0;
     }
 }
+
+/* Pattern Symbols */
+.pattern-symbol {
+    pointer-events: none;
+    user-select: none;
+}

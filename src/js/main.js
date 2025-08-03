@@ -5,6 +5,7 @@ import { updateUI, showError, showProgress, showUnitWarning, hideUnitWarning } f
 import { initializeI18n, t } from './i18n.js';
 import { applySeamAllowance } from './seam-allowance.js';
 import { TextureMapper } from './texture-mapping.js';
+import { assignPatternPieceSymbols, updateAllSymbols, removeAllSymbols } from './pattern-symbols.js';
 
 // Global state
 let currentSVG = null;
@@ -90,6 +91,9 @@ async function handleFileSelect(file) {
         // Assign IDs to all pattern pieces (g elements) if they don't have one
         assignPatternPieceIds(currentSVG);
         
+        // Assign symbols to pattern pieces
+        assignPatternPieceSymbols(currentSVG);
+        
         // Update UI
         updateUI.fileLoaded(elements, file.name);
         
@@ -157,6 +161,9 @@ function updatePreview() {
     const previewSvg = elements.svgPreview.querySelector('svg');
     if (previewSvg) {
         textureMapper.initialize(previewSvg);
+        
+        // Add symbols to all pattern pieces
+        updateAllSymbols(previewSvg);
     }
 }
 
@@ -245,6 +252,9 @@ function updatePageDisplay() {
             textureMapper.loadTextureData(textureData);
         }
     }
+    
+    // Add symbols to pattern pieces
+    updateAllSymbols(previewSVG);
     
     // Update navigation controls
     elements.pageIndicator.textContent = `ページ ${currentPageIndex + 1} / ${currentPlacement.pages.length}`;
