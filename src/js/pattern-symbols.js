@@ -97,12 +97,14 @@ export function addSymbolToPattern(pieceElement) {
     text.setAttribute('font-size', finalFontSize);
     text.setAttribute('font-family', 'Arial, sans-serif');
     text.setAttribute('font-weight', 'bold');
-    text.setAttribute('fill', '#000000');
-    text.setAttribute('stroke', '#000000');
+    text.setAttribute('fill', '#808080');
+    text.setAttribute('stroke', '#808080');
     text.setAttribute('stroke-width', '0.5');
+    text.setAttribute('opacity', '0.5');
     text.textContent = symbol;
     
-    pieceElement.appendChild(text);
+    // Insert at the beginning of the group to place behind other elements
+    pieceElement.insertBefore(text, pieceElement.firstChild);
 }
 
 /**
