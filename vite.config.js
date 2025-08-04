@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
   root: 'src',
@@ -9,5 +10,15 @@ export default defineConfig({
   },
   server: {
     port: 8000
-  }
+  },
+  plugins: [
+    viteStaticCopy({
+      targets: [
+        {
+          src: '../resources/oguri-c106.pdf',
+          dest: 'resources'
+        }
+      ]
+    })
+  ]
 });
