@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sewing SVG to PDF Converter</title>
+  <script type="module" crossorigin src="./assets/index-CmKMBi4a.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-D-op9Jsg.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sewing SVG to PDF Converter</h1>
+            <p>Blender Seams to Sewing Pattern プラグインのSVGファイルを印刷可能なPDFに変換します</p>
+        </header>
+
+        <main>
+            <!-- ファイルアップロードセクション -->
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <svg class="upload-icon" width="60" height="60" viewBox="0 0 24 24">
+                        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                    </svg>
+                    <p>SVGファイルをドラッグ&ドロップ<br>または</p>
+                    <label for="fileInput" class="file-label">ファイルを選択</label>
+                    <input type="file" id="fileInput" accept=".svg" hidden>
+                </div>
+                <div id="fileInfo" class="file-info"></div>
+            </section>
+
+            <!-- 設定セクション -->
+            <section class="settings-section" id="settingsSection" style="display: none;">
+                <h2>設定</h2>
+                
+                <div class="setting-group">
+                    <h3>スケール補正</h3>
+                    <div class="input-group">
+                        <label for="scaleFactor">拡大率:</label>
+                        <input type="number" id="scaleFactor" value="100" step="1" min="1" max="100">
+                        <span class="unit-label">%</span>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>縫いしろ設定</h3>
+                    <div class="input-group">
+                        <label for="seamAllowance">縫いしろ幅:</label>
+                        <input type="number" id="seamAllowance" value="5" step="1" min="0" max="50">
+                        <span class="unit-label">mm</span>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>用紙設定</h3>
+                    <div class="input-group">
+                        <label for="paperSize">用紙サイズ:</label>
+                        <select id="paperSize">
+                            <option value="a4" selected>A4 (210×297mm)</option>
+                            <option value="a3">A3 (297×420mm)</option>
+                            <option value="b4">B4 (257×364mm)</option>
+                            <option value="b5">B5 (182×257mm)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="orientation">向き:</label>
+                        <select id="orientation">
+                            <option value="portrait" selected>縦</option>
+                            <option value="landscape">横</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- プレビューセクション -->
+            <section class="preview-section" id="previewSection" style="display: none;">
+                <h2>プレビュー</h2>
+                <div id="svgPreview" class="svg-preview"></div>
+                
+                <!-- テクスチャ設定セクション -->
+                <div id="textureSettings" class="texture-settings" style="display: none;">
+                    <h3>テクスチャ設定</h3>
+                    <div class="texture-info">
+                        <span id="selectedPieceName">選択なし</span>
+                        <label class="upload-button">
+                            <input type="file" accept="image/*" id="textureImageInput" style="display: none;">
+                            <span>画像を選択</span>
+                        </label>
+                        <button id="removeTextureBtn" style="display: none;">削除</button>
+                    </div>
+                    <div id="textureControls" class="texture-controls" style="display: none;">
+                        <div class="input-group">
+                            <label>拡大率:</label>
+                            <input type="number" id="textureScale" value="100" step="5" min="10" max="500">
+                            <span class="unit-label">%</span>
+                        </div>
+                        <div class="input-group">
+                            <label>回転:</label>
+                            <input type="number" id="textureRotation" value="0" step="5" min="-180" max="180">
+                            <span class="unit-label">°</span>
+                        </div>
+                        <div class="input-group">
+                            <label>X位置:</label>
+                            <input type="number" id="textureOffsetX" value="0" step="5">
+                            <span class="unit-label">mm</span>
+                        </div>
+                        <div class="input-group">
+                            <label>Y位置:</label>
+                            <input type="number" id="textureOffsetY" value="0" step="5">
+                            <span class="unit-label">mm</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="pageNavigation" class="page-navigation" style="display: none;">
+                    <button id="prevPageBtn">前のページ</button>
+                    <span class="page-info" id="pageIndicator">ページ 1 / 1</span>
+                    <button id="nextPageBtn">次のページ</button>
+                </div>
+                <div id="pageInfo" class="page-info"></div>
+                <div id="unitWarning" class="unit-warning"></div>
+            </section>
+
+            <!-- 生成ボタン -->
+            <section class="action-section" id="actionSection" style="display: none;">
+                <button id="generatePdf" class="generate-button">PDFを生成</button>
+                <div id="progressInfo" class="progress-info"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2024 Sewing SVG to PDF Converter</p>
+        </footer>
+    </div>
+    
+</body>
+</html>
